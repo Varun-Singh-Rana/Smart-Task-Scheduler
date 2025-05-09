@@ -1,0 +1,20 @@
+1. Create a new folder:
+
+	mkdir electron-test1
+	cd electron-test1
+
+2. Initialize the project:
+
+	npm init -y
+
+3. Install Electron:
+
+	npm install electron --save-dev
+
+4: Test the App
+
+	npm start
+
+5: Build the .exe
+
+	npx electron-builder

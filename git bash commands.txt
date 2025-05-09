@@ -1,0 +1,34 @@
+1.
+	git init
+
+2. 
+	git status 
+
+3.Stage your changes by typing:
+
+	git add .
+
+4. committing the changes:
+	git commit -m "Initial commit"
+
+5. Add your GitHub repository as a remote by typing the following command, replacing <YOUR-REPO-URL> with your actual GitHub repository URL:
+	git remote add origin <YOUR-REPO-URL>
+
+6. to push:
+ 	git push origin master
+
+
+---------------------------------------------------
+TO ADD NEW FILE TO GITHUB
+
+1> to see new files in folder
+	git status 
+
+2> to add new file to list 
+	git add .
+
+3> committing the changes:
+	git commit -m "Initial commit"
+
+4> to push:
+ 	git push origin master

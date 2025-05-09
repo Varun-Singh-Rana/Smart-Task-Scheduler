@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="../css/style.css" />
+    <style>
+      img {
+        width: 120px;
+        margin-bottom: 20px;
+      }
+      .splash-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #4361ee 0%, #3f37c9 100%);
+        color: white;
+      }
+      .splash-logo {
+        font-size: 3rem;
+        margin-bottom: 2rem;
+        font-weight: bold;
+      }
+      .spinner {
+        border: 5px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top: 5px solid white;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="splash-container">
+      <img src="../assets/logo.png" alt="App Logo" />
+      <div class="splash-logo">Loading Task Manager</div>
+      <div class="spinner"></div>
+    </div>
+
+    <script>
+      // This will be handled by main.js
+    </script>
+  </body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Information</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <!-- window controls -->
+    <div class="window-controls">
+      <button id="minimize-btn" title="Minimize">─</button>
+      <button id="maximize-btn" title="Maximize">□</button>
+      <button id="close-btn" title="Close">✕</button>
+    </div>
+    <div class="container">
+      <h1>User Information</h1>
+      <form id="userInfoForm">
+        <div class="form-group">
+          <label for="name" class="form-label">Full Name:</label>
+          <input type="text" id="name" class="form-control" required />
+        </div>
+
+        <div class="form-group">
+          <label for="wakeTime" class="form-label">Wake Up Time:</label>
+          <input type="time" id="wakeTime" class="form-control" required />
+        </div>
+
+        <div class="form-group">
+          <label for="sleepTime" class="form-label">Sleep Time:</label>
+          <input type="time" id="sleepTime" class="form-control" required />
+        </div>
+
+        <button type="submit" class="btn">
+          <i class="fas fa-save"></i> Save Information
+        </button>
+      </form>
+    </div>
+    <script src="../js/user_info.js"></script>
+    <div id="loader" class="loader"></div>
+  </body>
+</html>
