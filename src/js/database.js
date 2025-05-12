@@ -27,24 +27,27 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
     console.error("Database error:", err);
   } else {
     console.log("Connected to SQLite database");
-    db.run(`CREATE TABLE IF NOT EXISTS user_info (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          wake_time TEXT NOT NULL,
-          sleep_time TEXT NOT NULL,
-          is_setup_complete BOOLEAN DEFAULT 0,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    // Use serialized execution for table creation
+    db.serialize(() => {
+      db.run(`CREATE TABLE IF NOT EXISTS user_info (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        wake_time TEXT NOT NULL,
+        sleep_time TEXT NOT NULL,
+        is_setup_complete BOOLEAN DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS user_tasks (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER NOT NULL,
-          task_name TEXT NOT NULL,
-          task_time TEXT NOT NULL,
-          priority TEXT NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY(user_id) REFERENCES user_info(id)
+      db.run(`CREATE TABLE IF NOT EXISTS user_tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        task_name TEXT NOT NULL,
+        task_time TEXT NOT NULL,
+        priority TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES user_info(id)
       )`);
+    });
   }
 });
 

@@ -57,14 +57,10 @@ document
         wakeTime,
         sleepTime,
       });
-
-      showToast("Information saved successfully!");
       window.location.href = `../html/user_setup.html?userId=${userId}`;
     } catch (err) {
       console.error("Save failed:", err);
       showToast("Failed to save information", "error");
-    } finally {
-      hideLoader();
     }
   });
 

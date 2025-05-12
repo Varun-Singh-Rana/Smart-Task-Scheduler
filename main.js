@@ -13,6 +13,7 @@ async function createWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
+      enablePreferredSizeMode: false,
       autoplayPolicy: "document-user-activation-required",
     },
     frame: false,
@@ -53,6 +54,7 @@ async function createWindow() {
 
 function loadPage(page) {
   const pagePath = path.join(__dirname, "src", "html", page);
+  console.log("Loading:", pagePath); // Add for debugging
   mainWindow.loadFile(pagePath).catch((err) => {
     console.error("Failed to load page:", err);
     mainWindow.loadFile(path.join(__dirname, "src", "html", "user_info.html"));
@@ -104,7 +106,11 @@ ipcMain.on("window-close", () => {
   if (win) win.close();
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  console.log("App path:", __dirname);
+  console.log("Current working directory:", process.cwd());
+  createWindow();
+});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
