@@ -1,19 +1,10 @@
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const db = require("./src/js/database");
 
-const fs = require("fs");
-const { ipcMain } = require("electron");
-
-// this is a handler
-ipcMain.on("mark-first-run-complete", () => {
-  const db = require("./src/js/database");
-  db.markAsRun();
-});
-
 let mainWindow;
 
-function createWindow() {
+async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -22,135 +13,89 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
+      autoplayPolicy: "document-user-activation-required",
     },
-    frame: false, // This removes the title bar and window controls
-    titleBarStyle: "hidden", // This hides the title bar but keeps the window controls
-    backgroundColor: "#4361ee", // Match your theme color
-    show: false, // Start hidden
+    frame: false,
+    titleBarStyle: "hidden",
+    backgroundColor: "#4361ee",
+    show: false,
   });
-
-  // Debug database path
-  console.log(
-    "Database path:",
-    path.join(__dirname, "user_info", "user_data.db")
-  );
 
   // Show splash screen first
   mainWindow.loadFile(path.join(__dirname, "src", "html", "splash.html"));
   mainWindow.show();
 
   // After 1.5 seconds, check user status
-  setTimeout(() => {
-    db.getUserInfo((err, userInfo) => {
-      let startPage;
+  setTimeout(async () => {
+    try {
+      const userInfo = await db.getUserInfo();
 
-      if (err || !userInfo) {
-        startPage = "user_info.html";
+      if (!userInfo) {
+        // Check if first run
+        const firstRun = await db.isFirstRun();
+        loadPage(
+          firstRun ? "user_info.html" : "user_info.html?error=setup_incomplete"
+        );
       } else {
-        db.getUserTasks(userInfo.id, (err, tasks) => {
-          if (err || !tasks || tasks.length === 0) {
-            startPage = "user_setup.html";
-          } else {
-            startPage = "index.html";
-          }
-          loadPage(startPage);
-        });
-        return;
+        const tasks = await db.getUserTasks(userInfo.id);
+        loadPage(tasks?.length ? "index.html" : "user_setup.html");
       }
-      loadPage(startPage);
-    });
+    } catch (err) {
+      console.error("Startup error:", err);
+      loadPage("user_info.html?error=startup_error");
+    }
   }, 1500);
 
-  mainWindow.loadFile(path.join(__dirname, "src", "index.html"));
-
-  mainWindow.on("closed", function () {
-    mainWindow = null;
-  });
-
-  // Check if the database file exists, if not, create it
-  db.getUserInfo((err, userInfo) => {
-    let startPage;
-
-    if (err || !userInfo) {
-      // First time user - go to user_info.html
-      startPage = "user_info.html";
-    } else {
-      // Existing user - check if tasks are set up
-      db.getUserTasks(userInfo.id, (err, tasks) => {
-        if (err || !tasks || tasks.length === 0) {
-          // User info exists but no tasks - go to user_setup.html
-          startPage = "user_setup.html";
-        } else {
-          // Fully set up - go to index.html
-          startPage = "index.html";
-        }
-        loadPage(startPage);
-      });
-      return;
-    }
-    loadPage(startPage);
-  });
-
-  mainWindow.once("ready-to-show", () => {
-    mainWindow.show();
-    // You could add a splash screen effect here if desired
-  });
-
-  // Check user status and load appropriate page
-  checkUserStatus();
-
-  mainWindow.on("closed", function () {
+  mainWindow.on("closed", () => {
     mainWindow = null;
   });
 }
 
-async function checkUserStatus() {
-  try {
-    const db = require("./src/js/database");
-    const userInfo = await db.getUserInfo();
-
-    if (!userInfo) {
-      mainWindow.loadFile(
-        path.join(__dirname, "src", "html", "user_info.html")
-      );
-    } else {
-      // Check if tasks exist
-      const tasks = await new Promise((resolve, reject) => {
-        db.db.all(
-          "SELECT * FROM user_tasks WHERE user_id = ?",
-          [userInfo.id],
-          (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-          }
-        );
-      });
-
-      if (!tasks || tasks.length === 0) {
-        mainWindow.loadFile(
-          path.join(__dirname, "src", "html", "user_setup.html")
-        );
-      } else {
-        mainWindow.loadFile(path.join(__dirname, "src", "index.html"));
-      }
-    }
-  } catch (err) {
-    console.error("Error checking user status:", err);
+function loadPage(page) {
+  const pagePath = path.join(__dirname, "src", "html", page);
+  mainWindow.loadFile(pagePath).catch((err) => {
+    console.error("Failed to load page:", err);
     mainWindow.loadFile(path.join(__dirname, "src", "html", "user_info.html"));
-  }
+  });
 }
 
-// Window control handlers
+// IPC Handlers
+ipcMain.handle("save-user-info", async (event, userData) => {
+  try {
+    return await db.saveUserInfo(
+      userData.name,
+      userData.wakeTime,
+      userData.sleepTime
+    );
+  } catch (err) {
+    console.error("Failed to save user info:", err);
+    throw err;
+  }
+});
+
+ipcMain.handle("complete-setup", async (event, userId) => {
+  try {
+    await db.completeSetup(userId);
+    return true;
+  } catch (err) {
+    console.error("Failed to complete setup:", err);
+    throw err;
+  }
+});
+
 ipcMain.on("window-minimize", () => {
-  BrowserWindow.getFocusedWindow().minimize();
+  const win = BrowserWindow.getFocusedWindow();
+  if (win) win.minimize();
 });
 
 ipcMain.on("window-maximize", () => {
   const win = BrowserWindow.getFocusedWindow();
-  if (win.isMaximized()) {
-    win.unmaximize();
-  } else {
-    win.maximize();
+  if (win) {
+    if (win.isMaximized()) {
+      win.unmaximize();
+    } else {
+      win.maximize();
+    }
   }
 });
 
@@ -161,10 +106,10 @@ ipcMain.on("window-close", () => {
 
 app.whenReady().then(createWindow);
 
-app.on("window-all-closed", function () {
+app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
-app.on("activate", function () {
+app.on("activate", () => {
   if (mainWindow === null) createWindow();
 });

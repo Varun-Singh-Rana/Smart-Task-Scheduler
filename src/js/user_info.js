@@ -15,15 +15,23 @@ document.getElementById("close-btn").addEventListener("click", () => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Check for error in URL
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has("error")) {
+    showToast(`Error: ${urlParams.get("error")}`, "error");
+  }
+
   try {
-    const userInfo = await db.getUserInfo();
+    // Check if we have existing user info
+    const userInfo = await ipcRenderer.invoke("get-user-info");
     if (userInfo) {
-      document.getElementById("name").value = userInfo.name;
-      document.getElementById("wakeTime").value = userInfo.wake_time;
-      document.getElementById("sleepTime").value = userInfo.sleep_time;
+      document.getElementById("name").value = userInfo.name || "";
+      document.getElementById("wakeTime").value = userInfo.wake_time || "";
+      document.getElementById("sleepTime").value = userInfo.sleep_time || "";
     }
   } catch (err) {
     console.error("Error loading user info:", err);
+    showToast("Error loading user information", "error");
   }
 });
 
@@ -31,67 +39,44 @@ document
   .getElementById("userInfoForm")
   .addEventListener("submit", async (e) => {
     e.preventDefault();
+    showLoader();
 
     const name = document.getElementById("name").value.trim();
     const wakeTime = document.getElementById("wakeTime").value;
     const sleepTime = document.getElementById("sleepTime").value;
 
     if (!name || !wakeTime || !sleepTime) {
-      alert("Please fill all fields");
+      hideLoader();
+      showToast("Please fill all fields", "error");
       return;
     }
 
     try {
-      console.log("Before save"); // Debug log
-      const userId = await saveUserInfo(name, wakeTime, sleepTime);
-      console.log("After save, userId:", userId); // Debug log
+      const userId = await ipcRenderer.invoke("save-user-info", {
+        name,
+        wakeTime,
+        sleepTime,
+      });
 
-      // Force navigation - don't rely on default behavior
+      showToast("Information saved successfully!");
       window.location.href = `../html/user_setup.html?userId=${userId}`;
     } catch (err) {
-      console.error("Save failed:", err); // Debug log
-      alert("Failed to save. Check console for details.");
+      console.error("Save failed:", err);
+      showToast("Failed to save information", "error");
+    } finally {
+      hideLoader();
     }
   });
 
 function showLoader() {
-  document.getElementById("loader").style.display = "block";
+  const loader = document.getElementById("loader");
+  if (loader) loader.style.display = "block";
 }
 
 function hideLoader() {
-  document.getElementById("loader").style.display = "none";
+  const loader = document.getElementById("loader");
+  if (loader) loader.style.display = "none";
 }
-
-document.getElementById("userInfoForm").addEventListener("submit", (e) => {
-  e.preventDefault();
-
-  const name = document.getElementById("name").value;
-  const wakeTime = document.getElementById("wakeTime").value;
-  const sleepTime = document.getElementById("sleepTime").value;
-
-  db.saveUserInfo(name, wakeTime, sleepTime, (err, userId) => {
-    if (err) {
-      showToast("Error saving user information!" + err.message);
-    } else {
-      showToast("User information saved successfully!");
-      // Redirect to task setup page
-      window.location.href = "../html/user_setup.html";
-    }
-  });
-});
-
-// If coming back to this page, load existing info
-window.addEventListener("DOMContentLoaded", () => {
-  db.getUserInfo((err, userInfo) => {
-    if (err) {
-      console.error("Error loading user info:", err);
-    } else if (userInfo) {
-      document.getElementById("name").value = userInfo.name;
-      document.getElementById("wakeTime").value = userInfo.wake_time;
-      document.getElementById("sleepTime").value = userInfo.sleep_time;
-    }
-  });
-});
 
 function showToast(message, type = "success") {
   const toast = document.createElement("div");

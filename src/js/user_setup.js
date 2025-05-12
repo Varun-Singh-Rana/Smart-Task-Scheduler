@@ -1,4 +1,3 @@
-const db = require("./database");
 const { ipcRenderer } = require("electron");
 
 // Window controls
@@ -17,77 +16,86 @@ document.getElementById("close-btn").addEventListener("click", () => {
 let tasks = [];
 let currentUserId = null;
 
-function showLoader() {
-  document.getElementById("loader").style.display = "block";
-}
-
-function hideLoader() {
-  document.getElementById("loader").style.display = "none";
-}
-
 // Load user info and existing tasks
-window.addEventListener("DOMContentLoaded", () => {
-  db.getUserInfo((err, userInfo) => {
-    if (err) {
-      console.error("Error loading user info:", err);
-      alert("Error loading user information. Please start from the beginning.");
-      window.location.href = "../html/user_info.html";
-    } else if (userInfo) {
-      currentUserId = userInfo.id;
+document.addEventListener("DOMContentLoaded", async () => {
+  showLoader();
 
-      // Load existing tasks
-      db.getUserTasks(currentUserId, (err, userTasks) => {
-        if (err) {
-          console.error("Error loading tasks:", err);
-        } else if (userTasks && userTasks.length > 0) {
-          tasks = userTasks;
-          renderTasks();
-        }
-      });
-    } else {
-      alert("Please enter your information first.");
-      window.location.href = "../html/user_info.html";
+  // Get user ID from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  currentUserId = urlParams.get("userId");
+
+  if (!currentUserId) {
+    showToast("Invalid user session", "error");
+    window.location.href = "../html/user_info.html";
+    return;
+  }
+
+  try {
+    // Load existing tasks
+    const userTasks = await ipcRenderer.invoke("get-user-tasks", currentUserId);
+    if (userTasks && userTasks.length > 0) {
+      tasks = userTasks;
+      renderTasks();
     }
-  });
+  } catch (err) {
+    console.error("Error loading tasks:", err);
+    showToast("Error loading tasks", "error");
+  } finally {
+    hideLoader();
+  }
 });
 
 document.getElementById("taskSetupForm").addEventListener("submit", (e) => {
   e.preventDefault();
 
-  const taskName = document.getElementById("taskName").value;
+  const taskName = document.getElementById("taskName").value.trim();
   const taskTime = document.getElementById("taskTime").value;
   const taskPriority = document.getElementById("taskPriority").value;
 
-  const newTask = {
+  if (!taskName || !taskTime) {
+    showToast("Please fill all task fields", "error");
+    return;
+  }
+
+  tasks.push({
     name: taskName,
     time: taskTime,
     priority: taskPriority,
-  };
+  });
 
-  tasks.push(newTask);
   renderTasks();
-
   // Reset form
   document.getElementById("taskSetupForm").reset();
 });
 
-document.getElementById("saveAllTasks").addEventListener("click", () => {
+document.getElementById("saveAllTasks").addEventListener("click", async () => {
   if (tasks.length === 0) {
-    alert("Please add at least one task before saving.");
+    alert("Please add at least one task before saving.", "error");
     return;
   }
 
-  db.saveUserTasks(currentUserId, tasks, (err) => {
-    if (err) {
-      showToast("Error saving tasks: " + err.message, "error");
-    } else {
-      showToast("Tasks saved successfully! Redirecting to dashboard...");
-      // Redirect to main page after a delay
-      setTimeout(() => {
-        window.location.href = "../index.html";
-      }, 1500);
-    }
-  });
+  showLoader();
+
+  try {
+    // Save tasks
+    await ipcRenderer.invoke("save-user-tasks", {
+      userId: currentUserId,
+      tasks,
+    });
+
+    // Mark setup as complete
+    await ipcRenderer.invoke("complete-setup", currentUserId);
+
+    showToast("Setup completed successfully!");
+    setTimeout(() => {
+      window.location.href = "../index.html";
+    }, 1500);
+  } catch (err) {
+    console.error("Setup failed:", err);
+    showToast("Failed to complete setup", "error");
+  } finally {
+    hideLoader();
+  }
 });
 
 function renderTasks() {
@@ -96,25 +104,42 @@ function renderTasks() {
 
   tasks.forEach((task, index) => {
     const li = document.createElement("li");
+    li.className = "task-item";
 
-    const taskInfo = document.createElement("div");
-    taskInfo.innerHTML = `
-            <strong>${task.name}</strong> at ${task.time} 
-            <span class="task-priority priority-${task.priority}">${task.priority}</span>
-        `;
+    li.innerHTML = `
+      <div class="task-info">
+        <div class="task-title">${task.name}</div>
+        <div class="task-meta">
+          <span><i class="far fa-clock"></i> ${task.time}</span>
+          <span class="task-priority priority-${task.priority}">${task.priority}</span>
+        </div>
+      </div>
+      <button class="delete-btn" data-index="${index}">
+        <i class="fas fa-trash"></i>
+      </button>
+    `;
 
-    const deleteBtn = document.createElement("button");
-    deleteBtn.textContent = "Delete";
-    deleteBtn.className = "delete-btn";
-    deleteBtn.addEventListener("click", () => {
+    tasksList.appendChild(li);
+  });
+
+  // Add event listeners to delete buttons
+  document.querySelectorAll(".delete-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const index = parseInt(e.currentTarget.getAttribute("data-index"));
       tasks.splice(index, 1);
       renderTasks();
     });
-
-    li.appendChild(taskInfo);
-    li.appendChild(deleteBtn);
-    tasksList.appendChild(li);
   });
+}
+
+function showLoader() {
+  const loader = document.getElementById("loader");
+  if (loader) loader.style.display = "block";
+}
+
+function hideLoader() {
+  const loader = document.getElementById("loader");
+  if (loader) loader.style.display = "none";
 }
 
 function showToast(message, type = "success") {

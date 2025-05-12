@@ -6,23 +6,12 @@ const CryptoJS = require("crypto-js");
 const DB_DIR = path.join(__dirname, "..", "..", "user_info");
 const DB_PATH = path.join(DB_DIR, "user_data.db");
 
-// to track first run
-const FIRST_RUN_FLAG = path.join(DB_DIR, ".firstrun");
-
-function checkFirstRun() {
-  return !fs.existsSync(FIRST_RUN_FLAG);
-}
-
-function markAsRun() {
-  fs.writeFileSync(FIRST_RUN_FLAG, "");
-}
-
 // Ensure the user_info directory exists
 if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
 }
 
-const ENCRYPTION_KEY = "i85cIN9tiEZ+r1eBeK/+x3qg5sexnjYmQBHk1Ziywaiyf+SWaSM7Z"; //Encryption key
+const ENCRYPTION_KEY = "i85cIN9tiEZ+r1eBeK/+x3qg5sexnjYmQBHk1Ziywaiyf+SWaSM7Z";
 
 function encryptData(data) {
   return CryptoJS.AES.encrypt(JSON.stringify(data), ENCRYPTION_KEY).toString();
@@ -43,6 +32,7 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
           name TEXT NOT NULL,
           wake_time TEXT NOT NULL,
           sleep_time TEXT NOT NULL,
+          is_setup_complete BOOLEAN DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`);
 
@@ -58,16 +48,26 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
   }
 });
 
+// Check if first run (now database-based)
+function isFirstRun() {
+  return new Promise((resolve) => {
+    db.get("SELECT COUNT(*) as count FROM user_info", (err, row) => {
+      resolve(row.count === 0);
+    });
+  });
+}
+
+// Save user info with setup status
 function saveUserInfo(name, wakeTime, sleepTime) {
   return new Promise((resolve, reject) => {
     console.log("Attempting to save user info..."); // Debug log
     const encryptedName = encryptData(name);
     const encryptedWakeTime = encryptData(wakeTime);
     const encryptedSleepTime = encryptData(sleepTime);
-
     db.run(
-      `INSERT INTO user_info (name, wake_time, sleep_time) VALUES (?, ?, ?)`,
-      [encryptedName, encryptedWakeTime, encryptedSleepTime],
+      `INSERT INTO user_info (name, wake_time, sleep_time, is_setup_complete) 
+       VALUES (?, ?, ?, ?)`,
+      [encryptedName, encryptedWakeTime, encryptedSleepTime, false],
       function (err) {
         if (err) {
           console.error("Database save error:", err); // Detailed error logging
@@ -80,36 +80,49 @@ function saveUserInfo(name, wakeTime, sleepTime) {
   });
 }
 
+// Get user info with verification
 function getUserInfo() {
   return new Promise((resolve, reject) => {
-    db.get(`SELECT * FROM user_info ORDER BY id DESC LIMIT 1`, (err, row) => {
-      if (err) return reject(err);
-      if (!row) return resolve(null);
+    db.get(
+      `SELECT * FROM user_info 
+       WHERE is_setup_complete = 1 
+       ORDER BY id DESC LIMIT 1`,
+      (err, row) => {
+        if (err) return reject(err);
+        if (!row) return resolve(null);
 
-      try {
-        const decryptedRow = {
-          id: row.id,
-          name: CryptoJS.AES.decrypt(row.name, ENCRYPTION_KEY).toString(
-            CryptoJS.enc.Utf8
-          ),
-          wake_time: CryptoJS.AES.decrypt(
-            row.wake_time,
-            ENCRYPTION_KEY
-          ).toString(CryptoJS.enc.Utf8),
-          sleep_time: CryptoJS.AES.decrypt(
-            row.sleep_time,
-            ENCRYPTION_KEY
-          ).toString(CryptoJS.enc.Utf8),
-          created_at: row.created_at,
-        };
-        resolve(decryptedRow);
-      } catch (e) {
-        reject(e);
+        try {
+          const decryptedRow = {
+            id: row.id,
+            name: decryptData(row.name),
+            wake_time: decryptData(row.wake_time),
+            sleep_time: decryptData(row.sleep_time),
+            created_at: row.created_at,
+          };
+          resolve(decryptedRow);
+        } catch (e) {
+          reject(e);
+        }
       }
-    });
+    );
   });
 }
 
+// Mark setup as complete
+function completeSetup(userId) {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE user_info SET is_setup_complete = 1 WHERE id = ?`,
+      [userId],
+      (err) => {
+        if (err) return reject(err);
+        resolve();
+      }
+    );
+  });
+}
+
+// Save user tasks
 function saveUserTasks(userId, tasks, callback) {
   const stmt = db.prepare(
     `INSERT INTO user_tasks (user_id, task_name, task_time, priority) VALUES (?, ?, ?, ?)`
@@ -126,6 +139,7 @@ function saveUserTasks(userId, tasks, callback) {
   stmt.finalize(callback);
 }
 
+// Get user tasks
 function getUserTasks(userId) {
   return new Promise((resolve, reject) => {
     db.all(
@@ -153,9 +167,11 @@ function getUserTasks(userId) {
 }
 
 module.exports = {
+  isFirstRun,
   saveUserInfo,
   getUserInfo,
-  db,
+  completeSetup,
   saveUserTasks,
   getUserTasks,
+  db,
 };
