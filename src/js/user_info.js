@@ -1,5 +1,5 @@
 const { ipcRenderer } = require("electron");
-const db = require("./database");
+const db = require("../../js/database");
 
 // Window controls
 document.getElementById("minimize-btn").addEventListener("click", () => {

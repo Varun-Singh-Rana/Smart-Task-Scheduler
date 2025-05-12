@@ -11,9 +11,10 @@ async function createWindow() {
     minWidth: 900,
     minHeight: 600,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      enablePreferredSizeMode: false,
+      contextIsolation: true, // Change from false to true
+      nodeIntegration: false, // Recommended to disable
+      enableRemoteModule: false, // Disable remote module
+
       autoplayPolicy: "document-user-activation-required",
     },
     frame: false,
