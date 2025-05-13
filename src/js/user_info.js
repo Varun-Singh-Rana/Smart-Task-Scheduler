@@ -1,5 +1,5 @@
 const { ipcRenderer } = require("electron");
-const db = require("../js/database");
+//const db = require("../js/database");
 
 // Window controls
 document.getElementById("minimize-btn").addEventListener("click", () => {
@@ -57,10 +57,12 @@ document
         wakeTime,
         sleepTime,
       });
-      window.location.href = `../html/user_setup.html?userId=${userId}`;
+      // Let main process handle navigation
+      ipcRenderer.send("navigate-to", "user_setup.html", { userId });
     } catch (err) {
       console.error("Save failed:", err);
       showToast("Failed to save information", "error");
+      hideLoader();
     }
   });
 

@@ -32,17 +32,18 @@ async function createWindow() {
   setTimeout(async () => {
     try {
       const userInfo = await db.getUserInfo();
+      const hasTasks = userInfo
+        ? (await db.getUserTasks(userInfo.id))?.length
+        : false;
+      const pageToLoad = !userInfo
+        ? (await db.isFirstRun())
+          ? "user_info.html"
+          : "user_info.html?error=setup_incomplete"
+        : hasTasks
+        ? "index.html"
+        : "user_setup.html";
 
-      if (!userInfo) {
-        // Check if first run
-        const firstRun = await db.isFirstRun();
-        loadPage(
-          firstRun ? "user_info.html" : "user_info.html?error=setup_incomplete"
-        );
-      } else {
-        const tasks = await db.getUserTasks(userInfo.id);
-        loadPage(tasks?.length ? "index.html" : "user_setup.html");
-      }
+      loadPage(pageToLoad);
     } catch (err) {
       console.error("Startup error:", err);
       loadPage("user_info.html?error=startup_error");
@@ -64,15 +65,17 @@ function loadPage(page) {
 }
 
 // IPC Handlers
-ipcMain.handle("save-user-info", async (event, userData) => {
+ipcMain.on("navigate-to", (event, page, queryParams = {}) => {
+  const queryString = new URLSearchParams(queryParams).toString();
+  const url = `${page}${queryString ? `?${queryString}` : ""}`;
+  loadPage(url);
+});
+
+ipcMain.handle("get-user-info", async () => {
   try {
-    return await db.saveUserInfo(
-      userData.name,
-      userData.wakeTime,
-      userData.sleepTime
-    );
+    return await db.getUserInfo();
   } catch (err) {
-    console.error("Failed to save user info:", err);
+    console.error("Failed to fetch user info:", err);
     throw err;
   }
 });
