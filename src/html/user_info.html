@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="../css/user_info.css" />
   </head>
   <body>
     <!-- window controls -->
@@ -36,13 +36,51 @@
         </div>
 
         <div class="form-group">
-          <label for="wakeTime" class="form-label">Wake Up Time:</label>
-          <input type="time" id="wakeTime" class="form-control" required />
+          <label for="workhour" class="form-label">Work hours:</label>
+          <div class="work-hours-container">
+            <input type="time" id="startTime" class="form-control" required />
+            <span class="work-hours-separator">:</span>
+            <input type="time" id="endTime" class="form-control" required />
+          </div>
         </div>
 
         <div class="form-group">
-          <label for="sleepTime" class="form-label">Sleep Time:</label>
-          <input type="time" id="sleepTime" class="form-control" required />
+          <label for="workhour" class="form-label">Work Days:</label>
+          <div class="checkbox-group">
+            <label
+              ><input type="checkbox" name="offDays" value="Monday" checked />
+              Monday</label
+            >
+            <label
+              ><input type="checkbox" name="offDays" value="Tuesday" checked />
+              Tuesday</label
+            >
+            <label
+              ><input
+                type="checkbox"
+                name="offDays"
+                value="Wednesday"
+                checked
+              />
+              Wednesday</label
+            >
+            <label
+              ><input type="checkbox" name="offDays" value="Thursday" checked />
+              Thursday</label
+            >
+            <label
+              ><input type="checkbox" name="offDays" value="Friday" checked />
+              Friday</label
+            >
+            <label
+              ><input type="checkbox" name="offDays" value="Saturday" />
+              Saturday</label
+            >
+            <label
+              ><input type="checkbox" name="offDays" value="Sunday" />
+              Sunday</label
+            >
+          </div>
         </div>
 
         <button type="submit" class="btn">
