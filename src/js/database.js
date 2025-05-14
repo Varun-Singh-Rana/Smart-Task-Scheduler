@@ -1,7 +1,6 @@
 const fs = require("fs");
 const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
-const CryptoJS = require("crypto-js");
 
 const DB_DIR = path.join(__dirname, "..", "..", "user_info");
 const DB_PATH = path.join(DB_DIR, "user_data.db");
@@ -11,29 +10,17 @@ if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
 }
 
-const ENCRYPTION_KEY = "i85cIN9tiEZ+r1eBeK/+x3qg5sexnjYmQBHk1Ziywaiyf+SWaSM7Z";
-
-function encryptData(data) {
-  return CryptoJS.AES.encrypt(JSON.stringify(data), ENCRYPTION_KEY).toString();
-}
-
-function decryptData(ciphertext) {
-  const bytes = CryptoJS.AES.decrypt(ciphertext, ENCRYPTION_KEY);
-  return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-}
-
 const db = new sqlite3.Database(DB_PATH, (err) => {
   if (err) {
     console.error("Database error:", err);
   } else {
     console.log("Connected to SQLite database");
-    // Use serialized execution for table creation
     db.serialize(() => {
       db.run(`CREATE TABLE IF NOT EXISTS user_info (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        wake_time TEXT NOT NULL,
-        sleep_time TEXT NOT NULL,
+        start_time TEXT NOT NULL,
+        end_time TEXT NOT NULL,
         is_setup_complete BOOLEAN DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`);
@@ -43,7 +30,9 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
         user_id INTEGER NOT NULL,
         task_name TEXT NOT NULL,
         task_time TEXT NOT NULL,
+        due_date DATE NOT NULL,
         priority TEXT NOT NULL,
+        completed BOOLEAN DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES user_info(id)
       )`);
@@ -61,22 +50,22 @@ function isFirstRun() {
 }
 
 // Save user info with setup status
-function saveUserInfo(name, wakeTime, sleepTime) {
+function saveUserInfo(name, startTime, endTime) {
   return new Promise((resolve, reject) => {
     console.log("Attempting to save user info..."); // Debug log
     const encryptedName = encryptData(name);
-    const encryptedWakeTime = encryptData(wakeTime);
-    const encryptedSleepTime = encryptData(sleepTime);
+    const encryptedStartTime = encryptData(startTime);
+    const encryptedEndTime = encryptData(endTime);
     db.run(
-      `INSERT INTO user_info (name, wake_time, sleep_time, is_setup_complete) 
+      `INSERT INTO user_info (name, start_time, end_time, is_setup_complete) 
        VALUES (?, ?, ?, ?)`,
-      [encryptedName, encryptedWakeTime, encryptedSleepTime, false],
+      [name, startTime, endTime, 1],
       function (err) {
         if (err) {
-          console.error("Database save error:", err); // Detailed error logging
+          console.error("Database save error:", err);
           return reject(err);
         }
-        console.log("Saved with ID:", this.lastID); // Debug log
+        console.log("Saved with ID:", this.lastID);
         resolve(this.lastID);
       }
     );
@@ -94,18 +83,14 @@ function getUserInfo() {
         if (err) return reject(err);
         if (!row) return resolve(null);
 
-        try {
-          const decryptedRow = {
-            id: row.id,
-            name: decryptData(row.name),
-            wake_time: decryptData(row.wake_time),
-            sleep_time: decryptData(row.sleep_time),
-            created_at: row.created_at,
-          };
-          resolve(decryptedRow);
-        } catch (e) {
-          reject(e);
-        }
+        const userInfo = {
+          id: row.id,
+          name: row.name,
+          start_time: row.start_time,
+          end_time: row.end_time,
+          created_at: row.created_at,
+        };
+        resolve(userInfo);
       }
     );
   });
@@ -128,15 +113,27 @@ function completeSetup(userId) {
 // Save user tasks
 function saveUserTasks(userId, tasks, callback) {
   const stmt = db.prepare(
-    `INSERT INTO user_tasks (user_id, task_name, task_time, priority) VALUES (?, ?, ?, ?)`
+    `INSERT INTO user_tasks (user_id, task_name, task_time, due_date, priority, completed) 
+     VALUES (?, ?, ?, ?, ?, ?)`
   );
 
   tasks.forEach((task) => {
-    const encryptedTaskName = encryptData(task.name);
-    const encryptedTaskTime = encryptData(task.time);
-    const encryptedPriority = encryptData(task.priority);
-
-    stmt.run([userId, encryptedTaskName, encryptedTaskTime, encryptedPriority]);
+    stmt.run(
+      [
+        userId,
+        encryptedTaskName,
+        encryptedTaskTime,
+        task.due_date,
+        encryptedPriority,
+        task.completed ? 1 : 0,
+      ],
+      (err) => {
+        if (err) {
+          console.error("Error saving task:", err);
+          callback(err);
+        }
+      }
+    );
   });
 
   stmt.finalize(callback);
@@ -151,19 +148,15 @@ function getUserTasks(userId) {
       (err, rows) => {
         if (err) return reject(err);
 
-        try {
-          const decryptedRows = rows.map((row) => ({
-            id: row.id,
-            user_id: row.user_id,
-            task_name: decryptData(row.task_name),
-            task_time: decryptData(row.task_time),
-            priority: decryptData(row.priority),
-            created_at: row.created_at,
-          }));
-          resolve(decryptedRows);
-        } catch (e) {
-          reject(e);
-        }
+        const tasks = rows.map((row) => ({
+          id: row.id,
+          user_id: row.user_id,
+          task_name: row.task_name,
+          task_time: row.task_time,
+          priority: row.priority,
+          created_at: row.created_at,
+        }));
+        resolve(tasks);
       }
     );
   });

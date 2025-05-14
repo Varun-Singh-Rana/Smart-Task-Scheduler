@@ -26,8 +26,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const userInfo = await ipcRenderer.invoke("get-user-info");
     if (userInfo) {
       document.getElementById("name").value = userInfo.name || "";
-      document.getElementById("wakeTime").value = userInfo.wake_time || "";
-      document.getElementById("sleepTime").value = userInfo.sleep_time || "";
+      document.getElementById("startTime").value = userInfo.wake_time || "";
+      document.getElementById("endTime").value = userInfo.sleep_time || "";
     }
   } catch (err) {
     console.error("Error loading user info:", err);
@@ -42,10 +42,10 @@ document
     showLoader();
 
     const name = document.getElementById("name").value.trim();
-    const wakeTime = document.getElementById("wakeTime").value;
-    const sleepTime = document.getElementById("sleepTime").value;
+    const startTime = document.getElementById("startTime").value;
+    const endTime = document.getElementById("endTime").value;
 
-    if (!name || !wakeTime || !sleepTime) {
+    if (!name || !startTime || !endTime) {
       hideLoader();
       showToast("Please fill all fields", "error");
       return;
@@ -54,8 +54,8 @@ document
     try {
       const userId = await ipcRenderer.invoke("save-user-info", {
         name,
-        wakeTime,
-        sleepTime,
+        startTime,
+        endTime,
       });
       // Let main process handle navigation
       ipcRenderer.send("navigate-to", "user_setup.html", { userId });
