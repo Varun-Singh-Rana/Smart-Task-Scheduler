@@ -25,21 +25,17 @@
       <!-- Sidebar -->
       <div class="sidebar">
         <div class="logo">TaskAssigner</div>
-        <a href="#" class="nav-item active">
-          <i class="fas fa-tachometer-alt"></i>
-          Dashboard
+        <a href="#" class="nav-item active" data-page="index.html">
+          <i class="fas fa-tachometer-alt"></i> Dashboard
         </a>
-        <a href="#" class="nav-item">
-          <i class="fas fa-calendar"></i>
-          Calendar
+        <a href="#" class="nav-item" data-page="calendar.html">
+          <i class="fas fa-calendar"></i> Calendar
         </a>
-        <a href="#" class="nav-item">
-          <i class="fas fa-chart-bar"></i>
-          Reports
+        <a href="#" class="nav-item" data-page="report.html">
+          <i class="fas fa-chart-bar"></i> Reports
         </a>
-        <a href="#" class="nav-item">
-          <i class="fas fa-cog"></i>
-          Settings
+        <a href="#" class="nav-item" data-page="setting.html">
+          <i class="fas fa-cog"></i> Settings
         </a>
       </div>
 
@@ -231,31 +227,6 @@
       </div>
     </div>
 
-    <script>
-      // Modal functionality
-      const assignTaskBtn = document.getElementById("assignTaskBtn");
-      const addTaskBtn = document.getElementById("addTaskBtn");
-      const taskModal = document.getElementById("taskModal");
-      const closeModal = document.getElementById("closeModal");
-
-      assignTaskBtn.addEventListener("click", () => {
-        taskModal.classList.add("active");
-      });
-
-      addTaskBtn.addEventListener("click", () => {
-        taskModal.classList.add("active");
-      });
-
-      closeModal.addEventListener("click", () => {
-        taskModal.classList.remove("active");
-      });
-
-      // Close modal when clicking outside
-      taskModal.addEventListener("click", (e) => {
-        if (e.target === taskModal) {
-          taskModal.classList.remove("active");
-        }
-      });
-    </script>
+    <script src="../js/index.js"></script>
   </body>
 </html>
