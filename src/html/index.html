@@ -42,10 +42,10 @@
       <!-- Main Content -->
       <div class="main-content">
         <div class="header">
-          <h1 class="page-title" id="pageTitle">Settings</h1>
+          <h1 class="page-title" id="pageTitle">Dashboard</h1>
           <div class="user-profile">
-            <p>Hi,<span id="usernameDisplay"> </span></p>
-            <div class="user-avatar" id="userAvatar">Dev</div>
+            <p>Hi,<span id="usernameDisplay">Dev</span></p>
+            <div class="user-avatar" id="userAvatar">D</div>
           </div>
         </div>
 
@@ -53,70 +53,34 @@
         <div class="dashboard-cards">
           <div class="card">
             <div class="card-title">Total Tasks</div>
-            <div class="card-value">24</div>
-            <div class="card-change">+3 from last week</div>
+            <div class="card-value" id="totalTasksVal"></div>
+            <div class="card-change" id="totalTasksChange"></div>
           </div>
           <div class="card">
             <div class="card-title">Completed</div>
-            <div class="card-value">14</div>
-            <div class="card-change">+5 from last week</div>
+            <div class="card-value" id="completedTasksVal"></div>
+            <div class="card-change" id="completedTasksChange"></div>
           </div>
           <div class="card">
             <div class="card-title">In Progress</div>
-            <div class="card-value">7</div>
-            <div class="card-change negative">-2 from last week</div>
+            <div class="card-value" id="inProgressTasksVal"></div>
+            <div class="card-change negative" id="inProgressTasksChange"></div>
           </div>
           <div class="card">
             <div class="card-title">Overdue</div>
-            <div class="card-value">3</div>
-            <div class="card-change negative">+1 from last week</div>
+            <div class="card-value" id="overdueTasksVal"></div>
+            <div class="card-change negative" id="overdueTasksChange"></div>
           </div>
         </div>
 
         <!-- Task Sections -->
         <div class="task-sections">
           <!-- My Tasks Section -->
-          <div class="task-list">
+          <div class="task-list" id="myTasksList">
             <h2 class="section-title">
               <i class="fas fa-user"></i>
-              My Tasks
+              Task List
             </h2>
-
-            <div class="task-item">
-              <input type="checkbox" class="task-checkbox" />
-              <div class="task-details">
-                <div class="task-title">Design new homepage layout</div>
-                <div class="task-meta">
-                  <div><i class="far fa-calendar"></i> Due tomorrow</div>
-                  <div><i class="far fa-user"></i> Alex</div>
-                </div>
-              </div>
-              <div class="task-priority priority-high">High</div>
-            </div>
-
-            <div class="task-item">
-              <input type="checkbox" class="task-checkbox" />
-              <div class="task-details">
-                <div class="task-title">Review team performance</div>
-                <div class="task-meta">
-                  <div><i class="far fa-calendar"></i> Due in 3 days</div>
-                  <div><i class="far fa-user"></i> Alex</div>
-                </div>
-              </div>
-              <div class="task-priority priority-medium">Medium</div>
-            </div>
-
-            <div class="task-item">
-              <input type="checkbox" class="task-checkbox" />
-              <div class="task-details">
-                <div class="task-title">Update documentation</div>
-                <div class="task-meta">
-                  <div><i class="far fa-calendar"></i> Due next week</div>
-                  <div><i class="far fa-user"></i> Alex</div>
-                </div>
-              </div>
-              <div class="task-priority priority-low">Low</div>
-            </div>
 
             <button class="add-task-btn" id="addTaskBtn">
               <i class="fas fa-plus"></i>
@@ -124,52 +88,15 @@
             </button>
           </div>
 
-          <!-- Team Tasks Section -->
-          <div class="task-list">
+          <!-- Done Task Section -->
+          <div class="task-list" id="teamTasksList">
             <h2 class="section-title">
-              <i class="fas fa-users"></i>
-              Team Tasks
+              <i class="fas fa-check-circle"></i>
+              Done Task
             </h2>
 
-            <div class="task-item">
-              <input type="checkbox" class="task-checkbox" />
-              <div class="task-details">
-                <div class="task-title">Implement API endpoints</div>
-                <div class="task-meta">
-                  <div><i class="far fa-calendar"></i> Due tomorrow</div>
-                  <div><i class="far fa-user"></i> Sarah</div>
-                </div>
-              </div>
-              <div class="task-priority priority-high">High</div>
-            </div>
-
-            <div class="task-item">
-              <input type="checkbox" class="task-checkbox" />
-              <div class="task-details">
-                <div class="task-title">Write unit tests</div>
-                <div class="task-meta">
-                  <div><i class="far fa-calendar"></i> Due in 2 days</div>
-                  <div><i class="far fa-user"></i> Mike</div>
-                </div>
-              </div>
-              <div class="task-priority priority-medium">Medium</div>
-            </div>
-
-            <div class="task-item">
-              <input type="checkbox" class="task-checkbox" />
-              <div class="task-details">
-                <div class="task-title">Prepare client presentation</div>
-                <div class="task-meta">
-                  <div><i class="far fa-calendar"></i> Due in 4 days</div>
-                  <div><i class="far fa-user"></i> Jamie</div>
-                </div>
-              </div>
-              <div class="task-priority priority-low">Low</div>
-            </div>
-
             <button class="add-task-btn" id="assignTaskBtn">
-              <i class="fas fa-user-plus"></i>
-              Assign Task
+              <i class="fas fa-plus"></i>
             </button>
           </div>
         </div>
@@ -180,10 +107,10 @@
     <div class="modal-overlay" id="taskModal">
       <div class="modal">
         <div class="modal-header">
-          <h3 class="modal-title">Assign New Task</h3>
+          <h3 class="modal-title" id="modalTitle">Assign New Task</h3>
           <button class="close-btn" id="closeModal">&times;</button>
         </div>
-        <form>
+        <form id="taskForm">
           <div class="form-group">
             <label class="form-label">Task Title</label>
             <input
@@ -192,6 +119,26 @@
               placeholder="Enter task title"
             />
           </div>
+
+          <div class="form-group">
+            <label class="form-label">Task timing</label>
+            <input
+              type="time"
+              id="startTime"
+              class="form-control"
+              placeholder="Enter task timing"
+              required
+            />
+            <span class="work-hours-separator">:</span>
+            <input
+              type="time"
+              id="endTime"
+              class="form-control"
+              placeholder="Enter task timing"
+              required
+            />
+          </div>
+
           <div class="form-group">
             <label class="form-label">Description</label>
             <textarea
@@ -200,19 +147,10 @@
               placeholder="Enter task description"
             ></textarea>
           </div>
-          <div class="form-group">
-            <label class="form-label">Assign To</label>
-            <select class="form-select">
-              <option>Select team member</option>
-              <option>Sarah Johnson</option>
-              <option>Mike Chen</option>
-              <option>Jamie Smith</option>
-              <option>Taylor Wilson</option>
-            </select>
-          </div>
+
           <div class="form-group">
             <label class="form-label">Due Date</label>
-            <input type="date" class="form-control" />
+            <input type="date" id="taskDueDateInput" class="form-control" />
           </div>
           <div class="form-group">
             <label class="form-label">Priority</label>
