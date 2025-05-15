@@ -49,11 +49,21 @@ document.getElementById("taskSetupForm").addEventListener("submit", (e) => {
   e.preventDefault();
 
   const taskName = document.getElementById("taskName").value.trim();
-  const taskTime = document.getElementById("taskTime").value;
+  const startTime = document.getElementById("startTime").value;
+  const endTime = document.getElementById("endTime").value;
   const taskPriority = document.getElementById("taskPriority").value;
 
-  if (!taskName || !taskTime) {
-    showToast("Please fill all task fields", "error");
+  const taskTime = `${startTime}-${endTime}`;
+  // day selector
+  const selectedDays = Array.from(
+    document.querySelectorAll("input[name='offDays']:checked")
+  ).map((checkbox) => checkbox.value);
+
+  if (!taskName || !startTime || !endTime || selectedDays.length === 0) {
+    showToast(
+      "Please fill all task fields and select at least one day",
+      "error"
+    );
     return;
   }
 
@@ -61,6 +71,9 @@ document.getElementById("taskSetupForm").addEventListener("submit", (e) => {
     name: taskName,
     time: taskTime,
     priority: taskPriority,
+    days: selectedDays,
+    due_date: new Date().toISOString().split("T")[0],
+    completed: false,
   });
 
   renderTasks();
