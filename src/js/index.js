@@ -76,14 +76,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         t.due_date &&
         new Date(t.due_date).setHours(0, 0, 0, 0) === tomorrow.getTime()
     );
-    const dueOther = tasks
-      .filter(
-        (t) =>
-          !t.completed &&
-          t.due_date &&
-          new Date(t.due_date).setHours(0, 0, 0, 0) > tomorrow.getTime()
-      )
-      .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
 
     // Render grouped tasks
     let taskListHTML = "";
@@ -95,10 +87,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       taskListHTML += `<div class="task-group-label">Tomorrow's Task</div>`;
       taskListHTML += dueTomorrow.map((t) => renderTaskItem(t, false)).join("");
     }
-    if (dueOther.length) {
-      taskListHTML += `<div class="task-group-label">Upcoming</div>`;
-      taskListHTML += dueOther.map((t) => renderTaskItem(t, false)).join("");
-    }
+
     const myTasksList = document.getElementById("myTasks");
     myTasksList.innerHTML = taskListHTML;
 
@@ -178,6 +167,55 @@ document.addEventListener("DOMContentLoaded", async () => {
     </li>
   `;
     }
+
+    // submit task form
+    document
+      .getElementById("taskForm")
+      .addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        // Collect form data
+        const title = this.querySelector(
+          'input[placeholder="Enter task title"]'
+        ).value.trim();
+        const startTime = this.querySelector("#startTime").value;
+        const endTime = this.querySelector("#endTime").value;
+        const dueDate = this.querySelector("#taskDueDateInput").value;
+        const priority = this.querySelector(".form-select").value;
+
+        // Validate required fields
+        if (!title) {
+          alert("Please enter a task title.");
+          return;
+        }
+
+        // Check for off day before adding (see next section)
+        const isOffDay = await ipcRenderer.invoke(
+          "check-user-off-day",
+          dueDate
+        );
+        if (isOffDay) {
+          if (
+            !confirm(
+              "The selected date is an off day. Are you sure you want to assign this task?"
+            )
+          ) {
+            return;
+          }
+        }
+
+        // Send to backend
+        await ipcRenderer.invoke("add-task", {
+          task_name: title,
+          task_time: `${startTime}-${endTime}`,
+          due_date: dueDate,
+          priority: priority,
+        });
+
+        // Close modal and refresh
+        document.getElementById("taskModal").classList.remove("active");
+        location.reload();
+      });
 
     // Attach event listeners to checkboxes in myTasks
     myTasksList.querySelectorAll(".task-checkbox").forEach((checkbox) => {
@@ -384,29 +422,212 @@ document.addEventListener("click", (e) => {
 setInterval(updateNotificationArea, 60000); // every minute
 updateNotificationArea(); // initial call
 
-// Initialize the task list
-const assignTaskBtn = document.getElementById("assignTaskBtn");
-const addTaskBtn = document.getElementById("addTaskBtn");
-const taskModal = document.getElementById("taskModal");
-const closeModal = document.getElementById("closeModal");
+// Detect Missing Time/Date on Form Submit
+taskForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-assignTaskBtn.addEventListener("click", () => {
-  taskModal.classList.add("active");
-});
+  const title = taskForm
+    .querySelector('input[placeholder="Enter task title"]')
+    .value.trim();
+  let startTime = taskForm.querySelector("#startTime").value;
+  let endTime = taskForm.querySelector("#endTime").value;
+  let dueDate = taskForm.querySelector("#taskDueDateInput").value;
+  const priority = taskForm.querySelector(".form-select").value;
 
-addTaskBtn.addEventListener("click", () => {
-  taskModal.classList.add("active");
-});
-
-closeModal.addEventListener("click", () => {
-  taskModal.classList.remove("active");
-});
-
-// Close modal when clicking outside
-taskModal.addEventListener("click", (e) => {
-  if (e.target === taskModal) {
-    taskModal.classList.remove("active");
+  // Only require title
+  if (!title) {
+    alert("Please enter a task title.");
+    return;
   }
+
+  // Suggest slot if time or date missing
+  if (!startTime || !endTime || !dueDate) {
+    const userInfo = await ipcRenderer.invoke("get-user-info");
+    const tasks = await ipcRenderer.invoke("get-user-tasks", userInfo.id);
+    const suggestion = suggestFreeSlot(userInfo, tasks);
+
+    if (suggestion) {
+      if (
+        confirm(
+          `Suggested time: ${suggestion.dueDate} ${suggestion.startTime}-${suggestion.endTime}. Use this?`
+        )
+      ) {
+        startTime = suggestion.startTime;
+        endTime = suggestion.endTime;
+        dueDate = suggestion.dueDate;
+      } else {
+        return; // User declined suggestion
+      }
+    } else {
+      alert("No free slot found in your work hours.");
+      return;
+    }
+  }
+
+  // Off day confirmation
+  const isOffDay = await ipcRenderer.invoke("check-user-off-day", dueDate);
+  if (isOffDay) {
+    const confirmOffDay = confirm(
+      "The selected date is an off day. Are you sure you want to assign this task?"
+    );
+    if (!confirmOffDay) return;
+  }
+
+  // Add the task
+  const userInfo = await ipcRenderer.invoke("get-user-info");
+  await ipcRenderer.invoke("add-task", {
+    user_id: userInfo.id,
+    task_name: title,
+    task_time: `${startTime}-${endTime}`,
+    due_date: dueDate,
+    priority: priority,
+    completed: false,
+  });
+
+  // Close modal and refresh
+  taskModal.classList.remove("active");
+  taskForm.reset();
+  window.location.reload();
+});
+
+// Suggest a free slot for the task
+function suggestFreeSlot(userInfo, tasks) {
+  // Use only values from database
+  const workStart = userInfo.startTime; // e.g. "09:00"
+  const workEnd = userInfo.endTime; // e.g. "17:00"
+  const offDays = userInfo.offDays || [];
+
+  if (!workStart || !workEnd) return null; // Can't suggest if work hours missing
+
+  // Try next 7 days
+  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+    const date = new Date();
+    date.setDate(date.getDate() + dayOffset);
+    const dateStr = date.toISOString().split("T")[0];
+
+    // Skip off days
+    if (offDays.includes(dateStr)) continue;
+
+    // Get tasks for this day
+    const dayTasks = tasks.filter((t) => t.due_date === dateStr);
+
+    // Find free slot (1 hour) in work hours
+    let slotStart = workStart;
+    while (slotStart < workEnd) {
+      // Calculate slot end
+      const [h, m] = slotStart.split(":").map(Number);
+      let slotEndH = h,
+        slotEndM = m + 60;
+      if (slotEndM >= 60) {
+        slotEndH += 1;
+        slotEndM -= 60;
+      }
+      let slotEnd = `${String(slotEndH).padStart(2, "0")}:${String(
+        slotEndM
+      ).padStart(2, "0")}`;
+      if (slotEnd > workEnd) break;
+
+      // Check for overlap
+      const overlap = dayTasks.some((t) => {
+        if (!t.task_time) return false;
+        const [tStart, tEnd] = t.task_time.split("-");
+        return !(slotEnd <= tStart || slotStart >= tEnd);
+      });
+
+      if (!overlap) {
+        return { dueDate: dateStr, startTime: slotStart, endTime: slotEnd };
+      }
+
+      // Move to next slot (30 min step)
+      let nextH = h,
+        nextM = m + 30;
+      if (nextM >= 60) {
+        nextH += 1;
+        nextM -= 60;
+      }
+      slotStart = `${String(nextH).padStart(2, "0")}:${String(nextM).padStart(
+        2,
+        "0"
+      )}`;
+      if (slotStart >= workEnd) break;
+    }
+  }
+  return null; // No slot found
+}
+
+// Initialize the task list
+document.addEventListener("DOMContentLoaded", () => {
+  const addTaskBtn = document.getElementById("addTaskBtn");
+  const taskModal = document.getElementById("taskModal");
+  const closeModal = document.getElementById("closeModal");
+  const taskForm = document.getElementById("taskForm");
+
+  // Show modal
+  addTaskBtn.addEventListener("click", () => {
+    taskModal.classList.add("active");
+  });
+
+  // Hide modal
+  closeModal.addEventListener("click", () => {
+    taskModal.classList.remove("active");
+    taskForm.reset();
+  });
+
+  // Hide modal when clicking outside modal content
+  taskModal.addEventListener("click", (e) => {
+    if (e.target === taskModal) {
+      taskModal.classList.remove("active");
+      taskForm.reset();
+    }
+  });
+
+  // Handle form submission
+  taskForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    // Get form values
+    const title = taskForm
+      .querySelector('input[placeholder="Enter task title"]')
+      .value.trim();
+    const startTime = taskForm.querySelector("#startTime").value;
+    const endTime = taskForm.querySelector("#endTime").value;
+    const dueDate = taskForm.querySelector("#taskDueDateInput").value;
+    const priority = taskForm.querySelector(".form-select").value;
+
+    if (!title || !startTime || !endTime || !dueDate) {
+      alert("Please fill all required fields.");
+      return;
+    }
+
+    // Check for off day
+    const isOffDay = await window
+      .require("electron")
+      .ipcRenderer.invoke("check-user-off-day", dueDate);
+    if (isOffDay) {
+      const confirmAdd = confirm(
+        "The selected date is an off day. Are you sure you want to assign this task?"
+      );
+      if (!confirmAdd) return;
+    }
+
+    // Add the task (adjust the IPC call as per your backend)
+    const userInfo = await window
+      .require("electron")
+      .ipcRenderer.invoke("get-user-info");
+    await window.require("electron").ipcRenderer.invoke("add-task", {
+      user_id: userInfo.id,
+      task_name: title,
+      task_time: `${startTime}-${endTime}`,
+      due_date: dueDate,
+      priority: priority,
+      completed: false,
+    });
+
+    // Close modal and refresh UI
+    taskModal.classList.remove("active");
+    taskForm.reset();
+    window.location.reload();
+  });
 });
 
 // Window controls

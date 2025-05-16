@@ -157,6 +157,27 @@ function saveUserTasks(userId, tasks, callback) {
   stmt.finalize(callback);
 }
 
+//TO get user tasks
+function addTask(task) {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `INSERT INTO user_tasks (user_id, task_name, task_time, due_date, priority, completed) VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        task.user_id,
+        task.task_name,
+        task.task_time,
+        task.due_date,
+        task.priority,
+        task.completed ? 1 : 0,
+      ],
+      function (err) {
+        if (err) reject(err);
+        else resolve(this.lastID);
+      }
+    );
+  });
+}
+
 //TO get markTask Completed
 function markTaskCompleted(taskId) {
   return new Promise((resolve, reject) => {
@@ -204,6 +225,7 @@ module.exports = {
   getUserInfo,
   completeSetup,
   saveUserTasks,
+  addTask,
   markTaskCompleted,
   getUserTasks,
   db,

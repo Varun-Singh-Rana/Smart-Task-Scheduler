@@ -111,6 +111,32 @@ ipcMain.handle("get-user-tasks", async (event, userId) => {
   }
 });
 
+// check for user day off
+ipcMain.handle("check-user-off-day", async (event, dateStr) => {
+  try {
+    // to get user info
+    const userInfo = await db.getUserInfo();
+    if (!userInfo || !userInfo.offDays) return false;
+
+    // offDays is an array of strings
+    return userInfo.offDays.includes(dateStr);
+  } catch (err) {
+    console.error("Failed to check user off day:", err);
+    return false;
+  }
+});
+
+// add-task
+ipcMain.handle("add-task", async (event, task) => {
+  try {
+    await db.addTask(task);
+    return true;
+  } catch (err) {
+    console.error("Failed to add task:", err);
+    throw err;
+  }
+});
+
 ipcMain.handle("mark-task-completed", async (event, taskId) => {
   try {
     await db.markTaskCompleted(taskId);
