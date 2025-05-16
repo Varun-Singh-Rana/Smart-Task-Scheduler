@@ -1,0 +1,8 @@
+user_info/
+.vscode/
+node_modules/
+dist/
+desktop.ini
+temp.txt
+test.html
+test2.html
