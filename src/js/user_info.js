@@ -28,6 +28,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.getElementById("name").value = userInfo.name || "";
       document.getElementById("startTime").value = userInfo.wake_time || "";
       document.getElementById("endTime").value = userInfo.sleep_time || "";
+      if (Array.isArray(userInfo.offDays)) {
+        userInfo.offDays.forEach((day) => {
+          const cb = document.querySelector(
+            `#offDaysCheckboxes input[value="${day}"]`
+          );
+          if (cb) cb.checked = true;
+        });
+      }
     }
   } catch (err) {
     console.error("Error loading user info:", err);
@@ -44,6 +52,12 @@ document
     const name = document.getElementById("name").value.trim();
     const startTime = document.getElementById("startTime").value;
     const endTime = document.getElementById("endTime").value;
+    // Collect checked off days
+    const offDays = Array.from(
+      document.querySelectorAll(
+        '#offDaysCheckboxes input[name="offDays"]:checked'
+      )
+    ).map((cb) => cb.value);
 
     if (!name || !startTime || !endTime) {
       hideLoader();
@@ -56,8 +70,8 @@ document
         name,
         startTime,
         endTime,
+        offDays, // <-- send offDays array to backend/database
       });
-      // Let main process handle navigation
       ipcRenderer.send("navigate-to", "user_setup.html", { userId });
     } catch (err) {
       console.error("Save failed:", err);

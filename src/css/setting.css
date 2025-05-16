@@ -383,3 +383,96 @@ body {
 .submit-btn:hover {
   background-color: var(--secondary);
 }
+
+/* */
+
+#offDaysCheckboxes label {
+  display: inline-block;
+  margin-right: 12px;
+  margin-bottom: 4px;
+  font-weight: 400;
+}
+
+/* Settings Section */
+.settings-section {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(30, 34, 90, 0.06);
+  padding: 32px 32px 24px 32px;
+  max-width: 420px;
+  margin-top: 32px;
+  margin-left: 0;
+}
+
+#userSettingsForm {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #222b45;
+  margin-bottom: 2px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="time"] {
+  padding: 8px 12px;
+  border: 1px solid #dbeafe;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #f8fafc;
+  transition: border 0.2s;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="time"]:focus {
+  border-color: #1976d2;
+  outline: none;
+}
+
+#offDaysCheckboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  justify-content: flex-start;
+}
+
+#offDaysCheckboxes label {
+  font-weight: 400;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 110px;
+}
+
+#saveSettingsBtn {
+  margin-top: 12px;
+  padding: 10px 0;
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#saveSettingsBtn:hover {
+  background: #1251a3;
+}
+
+.main-content {
+  padding-left: 48px; /* Or whatever your header/page-title uses */
+  padding-top: 32px;
+}

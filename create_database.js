@@ -21,38 +21,42 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
   console.log("Connected to SQLite database");
 
   // Create tables
+  // ...existing code...
+
   db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS user_info (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      start_time TEXT NOT NULL,
-      end_time TEXT NOT NULL,
-      is_setup_complete BOOLEAN DEFAULT 0,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`);
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    start_time TEXT NOT NULL,
+    end_time TEXT NOT NULL,
+    off_days TEXT DEFAULT '[]',           -- Add this line with default value
+    is_setup_complete BOOLEAN DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS user_tasks (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      task_name TEXT NOT NULL,
-      task_time TEXT NOT NULL,
-      due_date DATE NOT NULL,
-      priority TEXT NOT NULL,
-      completed BOOLEAN DEFAULT 0,
-      completed_at TEXT DEFAULT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES user_info(id)
-    )`);
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    task_name TEXT NOT NULL,
+    task_time TEXT NOT NULL,
+    due_date DATE NOT NULL,
+    priority TEXT NOT NULL,
+    completed BOOLEAN DEFAULT 0,
+    completed_at TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES user_info(id)
+  )`);
 
     // Insert sample user
     const name = "Varun";
     const startTime = "09:00";
     const endTime = "17:00";
+    const offDays = ["Saturday", "Sunday"];
 
     db.run(
-      `INSERT INTO user_info (name, start_time, end_time, is_setup_complete) 
-       VALUES (?, ?, ?, ?)`,
-      [name, startTime, endTime, 1],
+      `INSERT INTO user_info (name, start_time, end_time, off_days, is_setup_complete) 
+     VALUES (?, ?, ?, ?, ?)`,
+      [name, startTime, endTime, JSON.stringify(offDays), 1],
       function (err) {
         if (err) {
           console.error("Error inserting user:", err);

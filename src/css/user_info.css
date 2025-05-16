@@ -351,6 +351,101 @@ input.success {
   gap: 5px;
 }
 
+/* Center the form and give it a card look */
+.container {
+  max-width: 700px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(30, 34, 90, 0.08);
+  padding: 40px 36px 32px 36px;
+}
+
+h1 {
+  text-align: center;
+  color: #2563eb;
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin-bottom: 32px;
+  letter-spacing: 0.5px;
+}
+
+.form-group {
+  margin-bottom: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.form-label {
+  font-weight: 500;
+  color: #222b45;
+  margin-bottom: 8px;
+  font-size: 1.08rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #f8fafc;
+  transition: border 0.2s;
+  margin-bottom: 0;
+}
+
+.form-control:focus {
+  border-color: #2563eb;
+  outline: none;
+}
+
+.work-hours-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.work-hours-separator {
+  font-size: 1.5rem;
+  color: #888;
+}
+
+.checkbox-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.checkbox-inline label {
+  font-weight: 400;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 0;
+}
+
+.btn {
+  width: 180px;
+  margin: 18px auto 0 auto;
+  display: block;
+  padding: 12px 0;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.08rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn:hover {
+  background: #1746a2;
+}
+
 /* Window Controls */
 .window-controls {
   position: fixed;

@@ -89,17 +89,56 @@ document.addEventListener("DOMContentLoaded", async () => {
   `;
     }
 
-    // Render In-Progress (not completed) tasks
-    const myTasksList = document.getElementById("myTasks");
-    myTasksList.innerHTML = tasks
-      .filter((t) => !t.completed)
-      .map((t) => renderTaskItem(t, false))
-      .join("");
+    // Group and sort tasks for "Task List"
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
 
-    // Render Completed tasks
-    const doneTasksList = document.getElementById("doneTasks");
-    doneTasksList.innerHTML = tasks
+    const dueToday = tasks.filter(
+      (t) =>
+        !t.completed &&
+        t.due_date &&
+        new Date(t.due_date).setHours(0, 0, 0, 0) === today.getTime()
+    );
+    const dueTomorrow = tasks.filter(
+      (t) =>
+        !t.completed &&
+        t.due_date &&
+        new Date(t.due_date).setHours(0, 0, 0, 0) === tomorrow.getTime()
+    );
+    const dueOther = tasks
+      .filter(
+        (t) =>
+          !t.completed &&
+          t.due_date &&
+          new Date(t.due_date).setHours(0, 0, 0, 0) > tomorrow.getTime()
+      )
+      .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+
+    // Render grouped tasks
+    let taskListHTML = "";
+    if (dueToday.length) {
+      taskListHTML += `<div class="task-group-label">Due Today</div>`;
+      taskListHTML += dueToday.map((t) => renderTaskItem(t, false)).join("");
+    }
+    if (dueTomorrow.length) {
+      taskListHTML += `<div class="task-group-label">Due Tomorrow</div>`;
+      taskListHTML += dueTomorrow.map((t) => renderTaskItem(t, false)).join("");
+    }
+    if (dueOther.length) {
+      taskListHTML += `<div class="task-group-label">Upcoming</div>`;
+      taskListHTML += dueOther.map((t) => renderTaskItem(t, false)).join("");
+    }
+    const myTasksList = document.getElementById("myTasks");
+    myTasksList.innerHTML = taskListHTML;
+
+    // Sort "Done Task" by most recent
+    const doneTasksSorted = tasks
       .filter((t) => t.completed)
+      .sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at));
+    const doneTasksList = document.getElementById("doneTasks");
+    doneTasksList.innerHTML = doneTasksSorted
       .map((t) => renderTaskItem(t, true))
       .join("");
 
@@ -261,7 +300,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("overdueTasksChange").textContent =
       (diffOverdue >= 0 ? "+" : "") + diffOverdue + " from last week";
   } catch (err) {
-    console.error("Failed to load dashboard data:", err);
+    console.error("Failed to loading data:", err);
   }
 });
 

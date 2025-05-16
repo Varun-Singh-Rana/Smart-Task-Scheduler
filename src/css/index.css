@@ -389,3 +389,31 @@ body {
   width: auto;
   display: inline-block;
 }
+
+.task-group-label {
+  font-weight: bold;
+  font-size: 1.08rem;
+  margin: 18px 0 8px 0;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: #f5f7fa;
+  color: #1976d2;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.task-group-label:nth-of-type(1) {
+  /* Due Today */
+  background: #fff3e0;
+  color: #e65100;
+}
+.task-group-label:nth-of-type(2) {
+  /* Due Tomorrow */
+  background: #e3f2fd;
+  color: #1565c0;
+}
+.task-group-label:nth-of-type(3) {
+  /* Upcoming */
+  background: #f3e5f5;
+  color: #6a1b9a;
+}

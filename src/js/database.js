@@ -21,6 +21,7 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
         name TEXT NOT NULL,
         start_time TEXT NOT NULL,
         end_time TEXT NOT NULL,
+        off_days TEXT,
         is_setup_complete BOOLEAN DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`);
@@ -51,20 +52,38 @@ function isFirstRun() {
 }
 
 // Save user info with setup status
-function saveUserInfo(name, startTime, endTime) {
+function saveUserInfo(name, startTime, endTime, offDays) {
   return new Promise((resolve, reject) => {
     console.log("Attempting to save user info..."); // Debug log
-    db.run(
-      `INSERT INTO user_info (name, start_time, end_time, is_setup_complete) 
-       VALUES (?, ?, ?, ?)`,
-      [name, startTime, endTime, 1],
-      function (err) {
-        if (err) {
-          console.error("Database save error:", err);
-          return reject(err);
+    db.get(
+      `SELECT id FROM user_info WHERE is_setup_complete = 1 ORDER BY id DESC LIMIT 1`,
+      (err, row) => {
+        if (err) return reject(err);
+
+        if (row) {
+          // Update existing user
+          db.run(
+            `UPDATE user_info SET name = ?, start_time = ?, end_time = ?, off_days = ? WHERE id = ?`,
+            [name, startTime, endTime, JSON.stringify(offDays), row.id],
+            function (err) {
+              if (err) return reject(err);
+              resolve(row.id);
+            }
+          );
+        } else {
+          db.run(
+            `INSERT INTO user_info (name, start_time, end_time, off_days, is_setup_complete) VALUES (?, ?, ?, ?, ?)`,
+            [name, startTime, endTime, JSON.stringify(offDays), 1],
+            function (err) {
+              if (err) {
+                console.error("Database save error:", err);
+                return reject(err);
+              }
+              console.log("Saved with ID:", this.lastID);
+              resolve(this.lastID);
+            }
+          );
         }
-        console.log("Saved with ID:", this.lastID);
-        resolve(this.lastID);
       }
     );
   });
@@ -86,6 +105,7 @@ function getUserInfo() {
           name: row.name,
           start_time: row.start_time,
           end_time: row.end_time,
+          offDays: row.off_days ? JSON.parse(row.off_days) : [],
           created_at: row.created_at,
         };
         resolve(userInfo);

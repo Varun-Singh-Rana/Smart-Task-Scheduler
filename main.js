@@ -82,10 +82,10 @@ ipcMain.on("navigate-to", (event, page, queryParams = {}) => {
 
 ipcMain.handle(
   "save-user-info",
-  async (event, { name, startTime, endTime }) => {
+  async (event, { name, startTime, endTime, offDays }) => {
     try {
       // Adjust the function and arguments as needed for your database.js
-      return await db.saveUserInfo(name, startTime, endTime);
+      return await db.saveUserInfo(name, startTime, endTime, offDays);
     } catch (err) {
       console.error("Failed to save user info:", err);
       throw err;
