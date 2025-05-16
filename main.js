@@ -56,9 +56,18 @@ async function createWindow() {
 }
 
 function loadPage(page) {
-  const pagePath = path.join(__dirname, "src", "html", page);
-  console.log("Loading:", pagePath); // Add for debugging
-  mainWindow.loadFile(pagePath).catch((err) => {
+  // Split page and query string
+  const [file, queryString] = page.split("?");
+  const pagePath = path.join(__dirname, "src", "html", file);
+  console.log("Loading:", pagePath);
+
+  // Parse query string into an object
+  let query = {};
+  if (queryString) {
+    query = Object.fromEntries(new URLSearchParams(queryString));
+  }
+
+  mainWindow.loadFile(pagePath, { query }).catch((err) => {
     console.error("Failed to load page:", err);
     mainWindow.loadFile(path.join(__dirname, "src", "html", "user_info.html"));
   });
@@ -71,11 +80,43 @@ ipcMain.on("navigate-to", (event, page, queryParams = {}) => {
   loadPage(url);
 });
 
-ipcMain.handle("get-user-info", async () => {
+ipcMain.handle(
+  "save-user-info",
+  async (event, { name, startTime, endTime }) => {
+    try {
+      // Adjust the function and arguments as needed for your database.js
+      return await db.saveUserInfo(name, startTime, endTime);
+    } catch (err) {
+      console.error("Failed to save user info:", err);
+      throw err;
+    }
+  }
+);
+
+ipcMain.handle("get-user-info", async (event, userId) => {
   try {
     return await db.getUserInfo();
   } catch (err) {
     console.error("Failed to fetch user info:", err);
+    throw err;
+  }
+});
+
+ipcMain.handle("get-user-tasks", async (event, userId) => {
+  try {
+    return await db.getUserTasks(userId);
+  } catch (err) {
+    console.error("Failed to fetch user info:", err);
+    throw err;
+  }
+});
+
+ipcMain.handle("mark-task-completed", async (event, taskId) => {
+  try {
+    await db.markTaskCompleted(taskId);
+    return true;
+  } catch (err) {
+    console.error("Failed to mark task completed:", err);
     throw err;
   }
 });

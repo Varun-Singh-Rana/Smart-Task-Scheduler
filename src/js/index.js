@@ -11,6 +11,197 @@ document.querySelectorAll(".nav-item").forEach((item) => {
   });
 });
 
+// Handle task assignment
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const userInfo = await ipcRenderer.invoke("get-user-info");
+    if (!userInfo) return;
+
+    // Display user name/avatar
+    document.getElementById("usernameDisplay").textContent =
+      " " + userInfo.name;
+    document.getElementById("userAvatar").textContent = userInfo.name
+      ? userInfo.name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+      : "";
+
+    // Fetch tasks
+    const tasks = await ipcRenderer.invoke("get-user-tasks", userInfo.id);
+
+    //
+    function getPriorityClass(priority) {
+      if (!priority) return "";
+      if (priority.toLowerCase() === "high") return "priority-high";
+      if (priority.toLowerCase() === "medium") return "priority-medium";
+      if (priority.toLowerCase() === "low") return "priority-low";
+      return "";
+    }
+
+    function getAssigneeName(task) {
+      // Use task.assignee or task.user_name or fallback to userInfo.name
+      return task.assignee || task.user_name || "You";
+    }
+
+    function getDueText(task) {
+      // You can improve this to show "Due tomorrow", "Due in 3 days", etc.
+      if (!task.due_date) return "";
+      const due = new Date(task.due_date);
+      const now = new Date();
+      const diff = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+      if (diff === 0) return "Due today";
+      if (diff === 1) return "Due tomorrow";
+      if (diff > 1) return `Due in ${diff} days`;
+      if (diff < 0) return `Overdue`;
+      return "";
+    }
+
+    // DOMContentLoaded
+    function renderTaskItem(task, isDoneList = false) {
+      return `
+    <div class="task-item">
+      <input type="checkbox" class="task-checkbox" data-task-id="${task.id}" 
+        ${task.completed ? "checked" : ""} ${isDoneList ? "disabled" : ""}/>
+      <div class="task-details">
+        <div class="task-title">${task.task_name}</div>
+        <div class="task-meta">
+          <div>
+            <i class="far fa-calendar"></i>
+            ${
+              isDoneList
+                ? `Done on ${
+                    task.completed_at
+                      ? new Date(task.completed_at).toLocaleDateString()
+                      : ""
+                  }`
+                : getDueText(task)
+            }
+          </div>
+          <div><i class="far fa-user"></i> ${getAssigneeName(task)}</div>
+        </div>
+      </div>
+      <div class="task-priority ${getPriorityClass(task.priority)}">${
+        task.priority || ""
+      }</div>
+    </div>
+  `;
+    }
+
+    // Render In-Progress (not completed) tasks
+    const myTasksList = document.getElementById("myTasks");
+    myTasksList.innerHTML = tasks
+      .filter((t) => !t.completed)
+      .map((t) => renderTaskItem(t, false))
+      .join("");
+
+    // Render Completed tasks
+    const doneTasksList = document.getElementById("doneTasks");
+    doneTasksList.innerHTML = tasks
+      .filter((t) => t.completed)
+      .map((t) => renderTaskItem(t, true))
+      .join("");
+
+    //
+
+    // Add a modal for confirmation
+    const confirmModal = document.createElement("div");
+    confirmModal.className = "modal-overlay";
+    confirmModal.innerHTML = `
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Complete Task</h3>
+      <button class="close-btn" id="closeConfirmModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>Did you complete this task?</p>
+      <button id="confirmCompleteBtn" class="submit-btn">Yes</button>
+      <button id="cancelCompleteBtn" class="submit-btn">No</button>
+    </div>
+  </div>
+`;
+    document.body.appendChild(confirmModal);
+
+    function showConfirmModal(onConfirm) {
+      confirmModal.classList.add("active");
+      document.getElementById("confirmCompleteBtn").onclick = () => {
+        confirmModal.classList.remove("active");
+        onConfirm();
+      };
+      document.getElementById("cancelCompleteBtn").onclick = () => {
+        confirmModal.classList.remove("active");
+      };
+      document.getElementById("closeConfirmModal").onclick = () => {
+        confirmModal.classList.remove("active");
+      };
+    }
+
+    // Update renderTaskItem to add a data-task-id attribute and remove disabled from checkbox
+    function renderTaskItem(task, isDoneList = false) {
+      return `
+    <div class="task-item">
+      <input type="checkbox" class="task-checkbox" data-task-id="${task.id}" ${
+        task.completed ? "checked" : ""
+      } ${isDoneList ? "disabled" : ""}/>
+      <div class="task-details">
+        <div class="task-title">${task.task_name}</div>
+        <div class="task-meta">
+          <div>
+            <i class="far fa-calendar"></i>
+            ${
+              isDoneList
+                ? `Done on ${
+                    task.completed_at
+                      ? new Date(task.completed_at).toLocaleDateString()
+                      : ""
+                  }`
+                : getDueText(task)
+            }
+          </div>
+          <div><i class="far fa-user"></i> ${getAssigneeName(task)}</div>
+        </div>
+      </div>
+      <div class="task-priority ${getPriorityClass(task.priority)}">${
+        task.priority || ""
+      }</div>
+    </div>
+  `;
+    }
+
+    // Attach event listeners to checkboxes in myTasks
+    myTasksList.querySelectorAll(".task-checkbox").forEach((checkbox) => {
+      checkbox.addEventListener("click", function (e) {
+        e.preventDefault(); // Prevent immediate checking
+        const taskId = this.getAttribute("data-task-id");
+        showConfirmModal(async () => {
+          await ipcRenderer.invoke("mark-task-completed", Number(taskId));
+          location.reload();
+        });
+      });
+    });
+
+    //
+    // Calculate stats
+    const total = tasks.length;
+    const completed = tasks.filter((t) => t.completed).length;
+    const overdue = tasks.filter(
+      (t) => !t.completed && new Date(t.due_date) < new Date()
+    ).length;
+    const inProgress = total - completed - overdue;
+
+    document.getElementById("totalTasksVal").textContent = total;
+    document.getElementById("completedTasksVal").textContent = completed;
+    document.getElementById("overdueTasksVal").textContent = overdue;
+    document.getElementById("inProgressTasksVal").textContent = inProgress;
+
+    // Optionally, render task lists in #myTasksList and #teamTasksList
+    // ...
+  } catch (err) {
+    console.error("Failed to load dashboard data:", err);
+  }
+});
+
 // Initialize the task list
 const assignTaskBtn = document.getElementById("assignTaskBtn");
 const addTaskBtn = document.getElementById("addTaskBtn");

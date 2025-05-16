@@ -383,3 +383,9 @@ body {
 .submit-btn:hover {
   background-color: var(--secondary);
 }
+
+.modal-body .submit-btn {
+  margin: 8px 8px 0 0;
+  width: auto;
+  display: inline-block;
+}

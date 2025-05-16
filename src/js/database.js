@@ -33,6 +33,7 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
         due_date DATE NOT NULL,
         priority TEXT NOT NULL,
         completed BOOLEAN DEFAULT 0,
+        completed_at TEXT DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES user_info(id)
       )`);
@@ -53,9 +54,6 @@ function isFirstRun() {
 function saveUserInfo(name, startTime, endTime) {
   return new Promise((resolve, reject) => {
     console.log("Attempting to save user info..."); // Debug log
-    const encryptedName = encryptData(name);
-    const encryptedStartTime = encryptData(startTime);
-    const encryptedEndTime = encryptData(endTime);
     db.run(
       `INSERT INTO user_info (name, start_time, end_time, is_setup_complete) 
        VALUES (?, ?, ?, ?)`,
@@ -139,6 +137,21 @@ function saveUserTasks(userId, tasks, callback) {
   stmt.finalize(callback);
 }
 
+//TO get markTask Completed
+function markTaskCompleted(taskId) {
+  return new Promise((resolve, reject) => {
+    const completedAt = new Date().toISOString();
+    db.run(
+      `UPDATE user_tasks SET completed = 1, completed_at = ? WHERE id = ?`,
+      [completedAt, taskId],
+      function (err) {
+        if (err) reject(err);
+        else resolve();
+      }
+    );
+  });
+}
+
 // Get user tasks
 function getUserTasks(userId) {
   return new Promise((resolve, reject) => {
@@ -153,7 +166,10 @@ function getUserTasks(userId) {
           user_id: row.user_id,
           task_name: row.task_name,
           task_time: row.task_time,
+          due_date: row.due_date,
           priority: row.priority,
+          completed: !!row.completed,
+          completed_at: row.completed_at,
           created_at: row.created_at,
         }));
         resolve(tasks);
@@ -168,6 +184,7 @@ module.exports = {
   getUserInfo,
   completeSetup,
   saveUserTasks,
+  markTaskCompleted,
   getUserTasks,
   db,
 };
