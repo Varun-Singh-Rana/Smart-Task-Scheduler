@@ -15,7 +15,7 @@
     />
   </head>
   <body>
-    <!-- window controls -->
+    <!-- Window Controls -->
     <div class="window-controls">
       <button id="minimize-btn" title="Minimize">─</button>
       <button id="maximize-btn" title="Maximize">□</button>
@@ -76,8 +76,34 @@
         </div>
 
         <!-- Report Section -->
+        <div class="report-container">
+          <div class="time-period-selector">
+            <div class="time-period active" data-period="week">Weekly</div>
+            <div class="time-period" data-period="month">Monthly</div>
+          </div>
+
+          <div class="chart-container">
+            <div class="chart-card">
+              <h3 class="chart-title">Task Completion</h3>
+              <div class="chart-wrapper">
+                <canvas id="completionChart"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <h3 class="chart-title">Task Status Trend</h3>
+              <div class="chart-wrapper">
+                <canvas id="trendChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="task-stats" id="taskStats">
+            <!-- Will be populated dynamically -->
+          </div>
+        </div>
       </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../js/report.js"></script>
   </body>
 </html>

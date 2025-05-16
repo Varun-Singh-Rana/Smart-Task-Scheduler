@@ -46,24 +46,6 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Sidebar Styles */
-.sidebar {
-  background: white;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
-  padding: 1.5rem 0;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-
-.sidebar .add-task-btn {
-  margin-top: auto;
-  margin-bottom: 2rem;
-  align-self: center;
-  width: 80%;
-  justify-content: center;
-}
-
 /* Global Styles */
 
 * {
