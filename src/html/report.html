@@ -42,10 +42,12 @@
       <!-- Main Content -->
       <div class="main-content">
         <div class="header">
-          <h1 class="page-title" id="pageTitle">Settings</h1>
+          <h1 class="page-title" id="pageTitle">
+            <i class="fas fa-chart-bar"> </i>Reports
+          </h1>
           <div class="user-profile">
             <p>Hi,<span id="usernameDisplay"> </span></p>
-            <div class="user-avatar" id="userAvatar">Dev</div>
+            <div class="user-avatar" id="userAvatar"></div>
           </div>
         </div>
 
@@ -53,25 +55,27 @@
         <div class="dashboard-cards">
           <div class="card">
             <div class="card-title">Total Tasks</div>
-            <div class="card-value">24</div>
-            <div class="card-change">+3 from last week</div>
+            <div class="card-value" id="totalTasksVal"></div>
+            <div class="card-change" id="totalTasksChange"></div>
           </div>
           <div class="card">
             <div class="card-title">Completed</div>
-            <div class="card-value">14</div>
-            <div class="card-change">+5 from last week</div>
+            <div class="card-value" id="completedTasksVal"></div>
+            <div class="card-change" id="completedTasksChange"></div>
           </div>
           <div class="card">
             <div class="card-title">In Progress</div>
-            <div class="card-value">7</div>
-            <div class="card-change negative">-2 from last week</div>
+            <div class="card-value" id="inProgressTasksVal"></div>
+            <div class="card-change" id="inProgressTasksChange"></div>
           </div>
           <div class="card">
             <div class="card-title">Overdue</div>
-            <div class="card-value">3</div>
-            <div class="card-change negative">+1 from last week</div>
+            <div class="card-value" id="overdueTasksVal"></div>
+            <div class="card-change" id="overdueTasksChange"></div>
           </div>
         </div>
+
+        <!-- Report Section -->
       </div>
     </div>
     <script src="../js/report.js"></script>
