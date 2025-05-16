@@ -45,7 +45,7 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
     )`);
 
     // Insert sample user
-    const name = "Alex Johnson";
+    const name = "Varun";
     const startTime = "09:00";
     const endTime = "17:00";
 
