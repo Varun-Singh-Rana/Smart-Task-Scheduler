@@ -476,3 +476,70 @@ body {
   padding-left: 48px; /* Or whatever your header/page-title uses */
   padding-top: 32px;
 }
+
+/* Notification bell styles */
+.notification-bell {
+  background: none;
+  border: none;
+  position: relative;
+  margin-right: 1rem;
+  font-size: 1.5rem;
+  color: #4361ee;
+  cursor: pointer;
+  outline: none;
+}
+.notification-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  background: #f72585;
+  color: #fff;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  display: none;
+  font-size: 0.9rem;
+  text-align: center;
+  line-height: 15px;
+  padding: 0 3px;
+  font-weight: bold;
+  pointer-events: none;
+}
+.notification-popup {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 40px;
+  min-width: 260px;
+  background: #fff;
+  border: 1px solid #eee;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  z-index: 1000;
+  padding: 12px 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.notification-popup .notif-task {
+  padding: 10px 18px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+.notification-popup .notif-task:last-child {
+  border-bottom: none;
+}
+.notification-popup .notif-title {
+  font-weight: 600;
+}
+.notification-popup .notif-time {
+  font-size: 0.92em;
+  color: #888;
+}
+.notification-popup .notif-empty {
+  text-align: center;
+  color: #aaa;
+  padding: 18px 0;
+}

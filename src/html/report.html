@@ -46,6 +46,22 @@
             <i class="fas fa-chart-bar"> </i>Reports
           </h1>
           <div class="user-profile">
+            <!-- Notification Bell and Popup -->
+            <button
+              id="notificationBell"
+              class="notification-bell"
+              title="Notifications"
+            >
+              <i class="fas fa-bell"></i>
+              <span
+                id="notificationDot"
+                class="notification-dot"
+                style="display: none"
+                >0</span
+              >
+            </button>
+            <div id="notificationPopup" class="notification-popup"></div>
+            <!-- User Profile -->
             <p>Hi,<span id="usernameDisplay"> </span></p>
             <div class="user-avatar" id="userAvatar"></div>
           </div>

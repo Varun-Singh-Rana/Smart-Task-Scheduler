@@ -226,6 +226,115 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
+let notificationTasks = [];
+let overdueTaskIds = new Set();
+
+function getTimeString(date) {
+  return date.toTimeString().slice(0, 5); // "HH:MM"
+}
+
+// Filter today's tasks that are not completed and not overdue
+function getTodaysUpcomingTasks(tasks) {
+  const todayStr = new Date().toISOString().split("T")[0];
+  const nowStr = getTimeString(new Date());
+  return tasks
+    .filter(
+      (t) =>
+        !t.completed &&
+        t.due_date === todayStr &&
+        t.task_time &&
+        t.task_time > nowStr &&
+        !overdueTaskIds.has(t.id)
+    )
+    .sort((a, b) => a.task_time.localeCompare(b.task_time));
+}
+
+// Mark tasks as overdue if their time has passed
+function updateOverdueTasks(tasks) {
+  const todayStr = new Date().toISOString().split("T")[0];
+  const nowStr = getTimeString(new Date());
+  tasks.forEach((t) => {
+    if (
+      !t.completed &&
+      t.due_date === todayStr &&
+      t.task_time &&
+      t.task_time <= nowStr
+    ) {
+      overdueTaskIds.add(t.id);
+    }
+  });
+}
+
+// Render notification popup
+function renderNotificationPopup(tasks) {
+  const popup = document.getElementById("notificationPopup");
+  if (!tasks.length) {
+    popup.innerHTML = `<div class="notif-empty">No upcoming tasks for today.</div>`;
+    return;
+  }
+  popup.innerHTML = tasks
+    .map(
+      (t) => `
+      <div class="notif-task">
+        <span class="notif-title">${t.task_name}</span>
+        <span class="notif-time"><i class="far fa-clock"></i> ${t.task_time}</span>
+        <span class="notif-time"><i class="far fa-calendar"></i> ${t.due_date}</span>
+      </div>
+    `
+    )
+    .join("");
+}
+
+// Update notification bell and popup
+async function updateNotificationArea() {
+  const userInfo = await ipcRenderer.invoke("get-user-info");
+  if (!userInfo) return;
+  const tasks = await ipcRenderer.invoke("get-user-tasks", userInfo.id);
+
+  updateOverdueTasks(tasks);
+  notificationTasks = getTodaysUpcomingTasks(tasks);
+
+  // Update bell dot
+  const dot = document.getElementById("notificationDot");
+  dot.textContent = notificationTasks.length;
+  dot.style.display = notificationTasks.length ? "inline-block" : "none";
+
+  // If popup is open, update it
+  const popup = document.getElementById("notificationPopup");
+  if (popup.style.display === "block") {
+    renderNotificationPopup(notificationTasks);
+  }
+}
+
+// Show/hide popup on bell click
+document.getElementById("notificationBell").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const popup = document.getElementById("notificationPopup");
+  if (popup.style.display === "block") {
+    popup.style.display = "none";
+  } else {
+    renderNotificationPopup(notificationTasks);
+    popup.style.display = "block";
+  }
+});
+
+// Hide popup when clicking outside
+document.addEventListener("click", (e) => {
+  const popup = document.getElementById("notificationPopup");
+  if (
+    popup &&
+    popup.style.display === "block" &&
+    !popup.contains(e.target) &&
+    e.target.id !== "notificationBell"
+  ) {
+    popup.style.display = "none";
+  }
+});
+
+// Periodically update notifications
+setInterval(updateNotificationArea, 60000); // every minute
+updateNotificationArea(); // initial call
+
 document.querySelectorAll(".time-period").forEach((period) => {
   period.addEventListener("click", function () {
     document
