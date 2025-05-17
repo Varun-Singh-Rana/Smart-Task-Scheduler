@@ -16,5 +16,15 @@
   "dependencies": {
     "sqlite3": "^5.0.2",
     "crypto-js": "^4.1.1"
+  },
+  "build": {
+    "appId": "com.example.task-scheduler-pro",
+    "productName": "Smart Scheduler",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "icon": "src/assets/logo.ico"
+    }
   }
 }

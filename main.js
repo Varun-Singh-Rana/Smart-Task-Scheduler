@@ -10,12 +10,13 @@ async function createWindow() {
     height: 800,
     minWidth: 900,
     minHeight: 600,
+    icon: path.join(__dirname, "src/assets/logo.ico"),
     webPreferences: {
       contextIsolation: false,
       nodeIntegration: true,
       enableRemoteModule: true,
       sandbox: false,
-
+      devTools: process.env.NODE_ENV === "development",
       autoplayPolicy: "document-user-activation-required",
     },
     frame: false,
