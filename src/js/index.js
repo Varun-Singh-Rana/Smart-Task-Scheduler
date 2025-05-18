@@ -31,6 +31,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Fetch tasks
     const tasks = await ipcRenderer.invoke("get-user-tasks", userInfo.id);
 
+    // --- Add this block to filter today's repeating tasks ---
+    const today = new Date();
+    const dayName = today.toLocaleDateString("en-US", { weekday: "long" });
+
+    // This will include tasks that repeat on today (e.g., every Monday)
+    const repeatingTodayTasks = tasks.filter(
+      (task) => Array.isArray(task.days) && task.days.includes(dayName)
+    );
+
     //
     function getPriorityClass(priority) {
       if (!priority) return "";
@@ -59,7 +68,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Group and sort tasks for "Task List"
-    const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
@@ -79,9 +87,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Render grouped tasks
     let taskListHTML = "";
-    if (dueToday.length) {
-      taskListHTML += `<div class="task-group-label">Today's Task</div>`;
-      taskListHTML += dueToday.map((t) => renderTaskItem(t, false)).join("");
+    if (repeatingTodayTasks.length) {
+      taskListHTML += `<div class="task-group-label">Today's Repeating Tasks</div>`;
+      taskListHTML += repeatingTodayTasks
+        .map((t) => renderTaskItem(t, false))
+        .join("");
     }
     if (dueTomorrow.length) {
       taskListHTML += `<div class="task-group-label">Tomorrow's Task</div>`;

@@ -127,6 +127,27 @@ ipcMain.handle("check-user-off-day", async (event, dateStr) => {
   }
 });
 
+ipcMain.handle("save-user-tasks", async (event, { userId, tasks }) => {
+  try {
+    // Save each task with userId and repeat days
+    for (const task of tasks) {
+      await db.addTask({
+        user_id: userId,
+        task_name: task.name,
+        task_time: task.time,
+        due_date: task.due_date, // You may want to store the first due_date or leave it as today
+        priority: task.priority,
+        completed: false,
+        days: task.days, // Save repeat days as JSON if you want to persist them
+      });
+    }
+    return true;
+  } catch (err) {
+    console.error("Failed to save user tasks:", err);
+    throw err;
+  }
+});
+
 // add-task
 ipcMain.handle("add-task", async (event, task) => {
   try {

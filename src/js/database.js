@@ -35,6 +35,7 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
         priority TEXT NOT NULL,
         completed BOOLEAN DEFAULT 0,
         completed_at TEXT DEFAULT NULL,
+        repeat_days TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES user_info(id)
       )`);
@@ -161,7 +162,7 @@ function saveUserTasks(userId, tasks, callback) {
 function addTask(task) {
   return new Promise((resolve, reject) => {
     db.run(
-      `INSERT INTO user_tasks (user_id, task_name, task_time, due_date, priority, completed) VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO user_tasks (user_id, task_name, task_time, due_date, priority, completed, repeat_days) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         task.user_id,
         task.task_name,
@@ -169,6 +170,7 @@ function addTask(task) {
         task.due_date,
         task.priority,
         task.completed ? 1 : 0,
+        JSON.stringify(task.days || []),
       ],
       function (err) {
         if (err) reject(err);
@@ -212,6 +214,7 @@ function getUserTasks(userId) {
           completed: !!row.completed,
           completed_at: row.completed_at,
           created_at: row.created_at,
+          days: row.repeat_days ? JSON.parse(row.repeat_days) : [], // <-- parse repeat days
         }));
         resolve(tasks);
       }

@@ -101,7 +101,7 @@ document.getElementById("saveAllTasks").addEventListener("click", async () => {
 
     showToast("Setup completed successfully!");
     setTimeout(() => {
-      window.location.href = "../index.html";
+      window.location.href = "../html/index.html";
     }, 1500);
   } catch (err) {
     console.error("Setup failed:", err);
