@@ -66,9 +66,21 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
         const userId = this.lastID;
         console.log(`Inserted user with ID: ${userId}`);
 
-        // Helper to get ISO date string for N days from now
-        const dateNDays = (n) =>
-          new Date(Date.now() + n * 86400000).toISOString().split("T")[0];
+        //
+        const allowedDays = [1, 2, 3, 4]; // 0=Sunday, 1=Monday, ..., 6=Saturday
+
+        function dateNDays(n) {
+          let date = new Date();
+          let count = 0;
+          while (count < Math.abs(n)) {
+            date.setDate(date.getDate() + (n > 0 ? 1 : -1));
+            if (allowedDays.includes(date.getDay())) {
+              count++;
+            }
+          }
+          return date.toISOString().split("T")[0];
+        }
+
         // Helper to get completed_at ISO string for N days ago
         const completedAtNDaysAgo = (n) =>
           new Date(Date.now() - n * 86400000).toISOString();
@@ -192,6 +204,175 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
             time: "16:00-17:00",
             due_date: dateNDays(0),
             priority: "Medium",
+            completed: false,
+            completed_at: null,
+          },
+          // ...existing 15 tasks...
+          {
+            name: "Sprint Planning",
+            time: "10:00-11:00",
+            due_date: dateNDays(11),
+            priority: "High",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Database Backup",
+            time: "18:00-19:00",
+            due_date: dateNDays(12),
+            priority: "Medium",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Security Audit",
+            time: "14:00-15:00",
+            due_date: dateNDays(13),
+            priority: "Low",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "UI Review",
+            time: "11:00-12:00",
+            due_date: dateNDays(14),
+            priority: "High",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Performance Testing",
+            time: "13:00-14:00",
+            due_date: dateNDays(15),
+            priority: "Medium",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Bug Bash",
+            time: "15:00-16:00",
+            due_date: dateNDays(16),
+            priority: "Low",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Release Prep",
+            time: "09:00-10:00",
+            due_date: dateNDays(17),
+            priority: "High",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Customer Feedback Review",
+            time: "10:30-11:30",
+            due_date: dateNDays(18),
+            priority: "Medium",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Code Review Marathon",
+            time: "12:00-13:00",
+            due_date: dateNDays(19),
+            priority: "Low",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Documentation Sprint",
+            time: "14:00-15:00",
+            due_date: dateNDays(20),
+            priority: "High",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "UX Testing",
+            time: "16:00-17:00",
+            due_date: dateNDays(21),
+            priority: "Medium",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "API Refactoring",
+            time: "11:00-12:00",
+            due_date: dateNDays(22),
+            priority: "Low",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Mobile App Sync",
+            time: "13:00-14:00",
+            due_date: dateNDays(23),
+            priority: "High",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Cloud Migration",
+            time: "15:00-16:00",
+            due_date: dateNDays(24),
+            priority: "Medium",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "SEO Optimization",
+            time: "09:00-10:00",
+            due_date: dateNDays(25),
+            priority: "Low",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Partner Meeting",
+            time: "10:00-11:00",
+            due_date: dateNDays(26),
+            priority: "High",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Legal Review",
+            time: "12:00-13:00",
+            due_date: dateNDays(27),
+            priority: "Medium",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Brand Workshop",
+            time: "14:00-15:00",
+            due_date: dateNDays(28),
+            priority: "Low",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Analytics Deep Dive",
+            time: "16:00-17:00",
+            due_date: dateNDays(29),
+            priority: "High",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Quarterly Planning",
+            time: "11:00-12:00",
+            due_date: dateNDays(30),
+            priority: "Medium",
+            completed: false,
+            completed_at: null,
+          },
+          {
+            name: "Investor Update",
+            time: "13:00-14:00",
+            due_date: dateNDays(31),
+            priority: "Low",
             completed: false,
             completed_at: null,
           },

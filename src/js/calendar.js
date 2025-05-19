@@ -27,7 +27,7 @@ function renderCalendar() {
     selectedDate.toLocaleString("default", { month: "long", year: "numeric" });
 
   // Day of week headers
-  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   daysOfWeek.forEach((d) => {
     const header = document.createElement("div");
     header.textContent = d;
@@ -37,8 +37,9 @@ function renderCalendar() {
   });
 
   // Empty cells before 1st day
-  let dayOfWeek = firstDay.getDay();
-  for (let i = 0; i < dayOfWeek; i++) {
+  let dayOfWeek = firstDay.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+  let emptyCells = (dayOfWeek + 6) % 7; // Shift so Monday=0, Sunday=6
+  for (let i = 0; i < emptyCells; i++) {
     const empty = document.createElement("div");
     empty.className = "calendar-day inactive";
     grid.appendChild(empty);
@@ -47,7 +48,7 @@ function renderCalendar() {
   // Render days
   for (let i = 1; i <= lastDay.getDate(); i++) {
     const dayDate = new Date(year, month, i);
-    const dayStr = dayDate.toISOString().split("T")[0];
+    const dayStr = dayDate.toLocaleDateString("en-CA"); // "YYYY-MM-DD" in local time
     const dayTasks = tasks.filter((t) => t.due_date === dayStr);
 
     let dotClass = "";
@@ -176,7 +177,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function getSelectedDayStr() {
-  return selectedDate.toISOString().split("T")[0];
+  return selectedDate.toLocaleDateString("en-CA");
 }
 
 function selectDay(date) {
