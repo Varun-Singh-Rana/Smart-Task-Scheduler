@@ -48,23 +48,52 @@ function renderCalendar() {
   // Render days
   for (let i = 1; i <= lastDay.getDate(); i++) {
     const dayDate = new Date(year, month, i);
-    const dayStr = dayDate.toLocaleDateString("en-CA"); // "YYYY-MM-DD" in local time
+    const dayStr = dayDate.toLocaleDateString("en-CA");
     const dayTasks = tasks.filter((t) => t.due_date === dayStr);
 
-    let dotClass = "";
-    if (dayTasks.some((t) => t.completed)) dotClass = "calendar-dot-green";
-    else if (dayTasks.length) dotClass = "calendar-dot-blue";
-    else if (dayDate < new Date(new Date().toDateString()))
-      dotClass = "calendar-dot-gray";
+    let dotsHtml = "";
+
+    if (dayTasks.length === 0) {
+      // No tasks: show a single gray dot
+      dotsHtml = `<span class="calendar-dot calendar-dot-gray"></span>`;
+    } else {
+      // Up to 3 dots for tasks, colored by status/priority
+      dotsHtml = dayTasks
+        .slice(0, 3)
+        .map((t) => {
+          if (t.completed)
+            return `<span class="calendar-dot calendar-dot-completed"></span>`;
+          // Overdue: not completed and due date < today
+          if (
+            !t.completed &&
+            new Date(t.due_date) < new Date(new Date().toLocaleDateString())
+          )
+            return `<span class="calendar-dot calendar-dot-overdue"></span>`;
+          if (t.priority === "High")
+            return `<span class="calendar-dot calendar-dot-high"></span>`;
+          if (t.priority === "Medium")
+            return `<span class="calendar-dot calendar-dot-medium"></span>`;
+          if (t.priority === "Low")
+            return `<span class="calendar-dot calendar-dot-low"></span>`;
+          return `<span class="calendar-dot calendar-dot-gray"></span>`;
+        })
+        .join("");
+      // If more than 3 tasks, show a "+N" indicator
+      if (dayTasks.length > 3) {
+        dotsHtml += `<span class="calendar-dot calendar-dot-gray" style="font-size:0.8em;vertical-align:top;">+${
+          dayTasks.length - 3
+        }</span>`;
+      }
+    }
 
     const dayDiv = document.createElement("div");
     dayDiv.className =
       "calendar-day" + (dayStr === getSelectedDayStr() ? " selected" : "");
 
     dayDiv.innerHTML = `
-      <span>${i}</span>
-      ${dotClass ? `<span class="calendar-dot ${dotClass}"></span>` : ""}
-    `;
+    <span>${i}</span>
+    <span style="display:flex;gap:2px;justify-content:center;">${dotsHtml}</span>
+  `;
     dayDiv.onclick = () => selectDay(dayDate);
     grid.appendChild(dayDiv);
   }

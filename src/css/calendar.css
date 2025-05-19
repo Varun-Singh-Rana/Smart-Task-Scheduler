@@ -137,14 +137,28 @@
   display: inline-block;
 }
 
-.calendar-dot-green {
-  background: #43e97b;
+.calendar-dot-high {
+  background: #f72585;
 }
-.calendar-dot-blue {
-  background: #4cc9f0;
+
+.calendar-dot-medium {
+  background: #f8961e;
 }
+
+.calendar-dot-low {
+  background: #2e7d32;
+}
+
+.calendar-dot-completed {
+  background: #0d86dd;
+}
+
+.calendar-dot-overdue {
+  background: #a259f7;
+}
+
 .calendar-dot-gray {
-  background: #bdbdbd;
+  background: #adb5bd;
 }
 
 .day-tasks-panel {
