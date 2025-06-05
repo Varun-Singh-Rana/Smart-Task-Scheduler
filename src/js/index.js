@@ -330,6 +330,140 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
+// Quick Task modal
+const quickTaskModal = document.createElement("div");
+quickTaskModal.className = "modal-overlay";
+quickTaskModal.innerHTML = `
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Quick Task</h3>
+      <button class="close-btn" id="closeQuickTaskModal">&times;</button>
+    </div>
+    <form id="quickTaskForm">
+      <div class="form-group">
+        <label>Task Name</label>
+        <input type="text" id="quickTaskName" class="form-control" required />
+      </div>
+      <div class="form-group">
+        <label>Start Time (optional)</label>
+        <input type="time" id="quickStartTime" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label>End Time (optional)</label>
+        <input type="time" id="quickEndTime" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label>Date (optional)</label>
+        <input type="date" id="quickTaskDate" class="form-control" />
+      </div>
+      <button type="submit" class="submit-btn">Find Slot</button>
+    </form>
+    <div id="quickTaskOptions"></div>
+  </div>
+`;
+document.body.appendChild(quickTaskModal);
+
+// 2. Show modal on Quick Task button click
+document.querySelector(".quick-add").addEventListener("click", () => {
+  quickTaskModal.classList.add("active");
+  document.getElementById("quickTaskForm").reset();
+  document.getElementById("quickTaskOptions").innerHTML = "";
+});
+
+// 3. Hide modal
+document.getElementById("closeQuickTaskModal").onclick = () => {
+  quickTaskModal.classList.remove("active");
+};
+
+// 4. Handle Quick Task form submit
+// ...existing code...
+
+document
+  .getElementById("quickTaskForm")
+  .addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const name = document.getElementById("quickTaskName").value.trim();
+    const startTime = document.getElementById("quickStartTime").value;
+    const endTime = document.getElementById("quickEndTime").value;
+    const date = document.getElementById("quickTaskDate").value;
+
+    if (!name) {
+      alert("Please enter a task name.");
+      return;
+    }
+
+    const userInfo = await ipcRenderer.invoke("get-user-info");
+    const tasks = await ipcRenderer.invoke("get-user-tasks", userInfo.id);
+    const optionsDiv = document.getElementById("quickTaskOptions");
+    let options = [];
+
+    // If only time is provided (no date)
+    if (startTime && endTime && !date) {
+      let count = 0;
+      let dayOffset = 0;
+      while (count < 3 && dayOffset < 14) {
+        let d = new Date();
+        d.setDate(d.getDate() + dayOffset);
+        const dateStr = d.toISOString().split("T")[0];
+        const dayName = d.toLocaleDateString("en-US", { weekday: "long" });
+
+        // Skip off days
+        if (userInfo.offDays && userInfo.offDays.includes(dayName)) {
+          dayOffset++;
+          continue;
+        }
+
+        // Check overlap for this day
+        const dayTasks = tasks.filter((t) => t.due_date === dateStr);
+        const overlap = dayTasks.some((t) => {
+          if (!t.task_time) return false;
+          const [tStart, tEnd] = t.task_time.split("-");
+          return !(endTime <= tStart || startTime >= tEnd);
+        });
+
+        if (!overlap) {
+          options.push({ date: dateStr, startTime, endTime });
+          count++;
+        }
+        dayOffset++;
+      }
+    }
+    // ...existing logic for other cases (date only, both, neither)...
+
+    // Show options to user
+    if (!options.length) {
+      optionsDiv.innerHTML = "<div>No free slots found.</div>";
+      return;
+    }
+    optionsDiv.innerHTML = options
+      .map(
+        (opt, idx) => `
+    <button class="quick-slot-btn" data-idx="${idx}">
+      ${opt.date} ${opt.startTime}-${opt.endTime}
+    </button>
+  `
+      )
+      .join("");
+
+    // Handle slot selection
+    optionsDiv.querySelectorAll(".quick-slot-btn").forEach((btn) => {
+      btn.onclick = async () => {
+        const idx = btn.getAttribute("data-idx");
+        const opt = options[idx];
+        await ipcRenderer.invoke("add-task", {
+          user_id: userInfo.id,
+          task_name: name,
+          task_time: `${opt.startTime}-${opt.endTime}`,
+          due_date: opt.date,
+          priority: "Medium",
+          completed: false,
+        });
+        quickTaskModal.classList.remove("active");
+        window.location.reload();
+      };
+    });
+  });
+
 let notificationTasks = [];
 let overdueTaskIds = new Set();
 
