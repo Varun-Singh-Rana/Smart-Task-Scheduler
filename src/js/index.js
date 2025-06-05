@@ -378,6 +378,9 @@ document.getElementById("closeQuickTaskModal").onclick = () => {
 // 4. Handle Quick Task form submit
 // ...existing code...
 
+// ...existing code...
+
+// 4. Handle Quick Task form submit
 document
   .getElementById("quickTaskForm")
   .addEventListener("submit", async function (e) {
@@ -428,7 +431,52 @@ document
         dayOffset++;
       }
     }
-    // ...existing logic for other cases (date only, both, neither)...
+    // If only date is provided (no time)
+    else if (date && !startTime && !endTime) {
+      // Check if it's an off day
+      const d = new Date(date);
+      const dayName = d.toLocaleDateString("en-US", { weekday: "long" });
+      if (userInfo.offDays && userInfo.offDays.includes(dayName)) {
+        optionsDiv.innerHTML = `<div>${dayName} is your off day.</div>`;
+      } else {
+        const workStart = userInfo.start_time || "09:00";
+        const workEnd = userInfo.end_time || "17:00";
+        const dayTasks = tasks.filter((t) => t.due_date === date);
+        let s = workStart;
+        let count = 0;
+        while (s < workEnd && count < 3) {
+          let [h, m] = s.split(":").map(Number);
+          let eH = h + 1;
+          let e = `${String(eH).padStart(2, "0")}:${String(m).padStart(
+            2,
+            "0"
+          )}`;
+          if (e > workEnd) break;
+
+          // Check overlap
+          const overlap = dayTasks.some((t) => {
+            if (!t.task_time) return false;
+            const [tStart, tEnd] = t.task_time.split("-");
+            return !(e <= tStart || s >= tEnd);
+          });
+
+          if (!overlap) {
+            options.push({ date, startTime: s, endTime: e });
+            count++;
+          }
+
+          // Next slot (30 min step)
+          m += 30;
+          if (m >= 60) {
+            h += 1;
+            m -= 60;
+          }
+          s = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+          if (s >= workEnd) break;
+        }
+      }
+    }
+    // ...existing logic for other cases (both date & time, neither)...
 
     // Show options to user
     if (!options.length) {
